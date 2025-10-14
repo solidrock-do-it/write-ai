@@ -76,6 +76,8 @@ export default function AIArticleGenerator() {
   const [selectedTitle, setSelectedTitle] = useState<AITitle | null>(null);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const [openPopovers, setOpenPopovers] = useState<Record<string, boolean>>({});
+  const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null);
+  const isLoadingHistoryRef = useRef(false); // 使用 ref 而不是 state，避免触发重新渲染
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // 使用 Zustand store
@@ -101,6 +103,7 @@ export default function AIArticleGenerator() {
     addHistoryItem,
     deleteHistoryItem,
     loadHistoryItem,
+    updateHistoryItem,
   } = useArticleStore();
 
   // 自动调整 textarea 高度
@@ -142,6 +145,33 @@ export default function AIArticleGenerator() {
       setLanguage("chinese");
     }
   }, [currentModel, language, setLanguage]);
+
+  // 当 currentGeneratedData 改变时，自动设置 selectedTitle 为第一个标题
+  useEffect(() => {
+    // 如果正在加载历史记录，不执行任何操作（由 handleLoadHistoryItem 处理）
+    if (isLoadingHistoryRef.current) {
+      return;
+    }
+
+    if (
+      currentGeneratedData &&
+      currentGeneratedData.titles &&
+      currentGeneratedData.titles.length > 0
+    ) {
+      // 用于新生成的文章，使用第一个标题
+      setSelectedTitle(currentGeneratedData.titles[0]);
+    } else {
+      setSelectedTitle(null);
+    }
+  }, [currentGeneratedData]);
+
+  // 当用户切换标题时，更新历史记录中的选中标题
+  useEffect(() => {
+    // 只有在不是加载历史记录时才更新
+    if (currentHistoryId && selectedTitle && !isLoadingHistoryRef.current) {
+      updateHistoryItem(currentHistoryId, { selectedTitle });
+    }
+  }, [selectedTitle, currentHistoryId, updateHistoryItem]);
 
   // 定义所有配置选项
   const optionSections: OptionSection[] = [
@@ -328,20 +358,23 @@ export default function AIArticleGenerator() {
           setCurrentGeneratedData(data);
           setGeneratedContent(data.content);
 
-          // 保存到历史记录
+          // 保存到历史记录，默认选中第一个标题
+          const historyId = Date.now().toString();
           const historyItem = {
-            id: Date.now().toString(),
+            id: historyId,
             timestamp: Date.now(),
             keywords,
             articleLength,
             writingStyle,
             articleType,
             language,
+            selectedTitle: data.titles[0], // 保存默认选中的第一个标题
             generatedData: data,
             provider: selectedProvider,
           };
 
           addHistoryItem(historyItem);
+          setCurrentHistoryId(historyId); // 设置当前历史记录 ID
         },
         onError: (error) => {
           console.error("Generation error:", error);
@@ -434,6 +467,7 @@ export default function AIArticleGenerator() {
       setGeneratedContent("");
       setCurrentGeneratedData(null);
       setSelectedTitle(null);
+      setCurrentHistoryId(null); // 清空当前历史记录 ID
     }
   };
 
@@ -463,6 +497,24 @@ export default function AIArticleGenerator() {
       setCopySuccess("content");
       setTimeout(() => setCopySuccess(null), 2000);
     }
+  };
+
+  // 加载历史记录的处理函数
+  const handleLoadHistoryItem = (id: string) => {
+    isLoadingHistoryRef.current = true; // 设置加载标志，防止 useEffect 触发更新
+
+    const savedSelectedTitle = loadHistoryItem(id);
+    setCurrentHistoryId(id);
+
+    // 如果历史记录中有保存的选中标题，使用它
+    if (savedSelectedTitle) {
+      setSelectedTitle(savedSelectedTitle);
+    }
+
+    // 使用 requestAnimationFrame 确保在下一帧重置标志
+    requestAnimationFrame(() => {
+      isLoadingHistoryRef.current = false;
+    });
   };
 
   return (
@@ -531,7 +583,7 @@ export default function AIArticleGenerator() {
                     {sidebarOpen ? (
                       <div
                         className="group relative px-2 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
-                        onClick={() => loadHistoryItem(item.id)}
+                        onClick={() => handleLoadHistoryItem(item.id)}
                       >
                         <div className="flex items-center justify-center gap-2 relative">
                           <Clock size={16} />
@@ -557,7 +609,7 @@ export default function AIArticleGenerator() {
                       </div>
                     ) : (
                       <div
-                        onClick={() => loadHistoryItem(item.id)}
+                        onClick={() => handleLoadHistoryItem(item.id)}
                         className="p-1 hover:bg-gray-100 text-xs cursor-pointer flex justify-center"
                       >
                         <span className="line-clamp-2">

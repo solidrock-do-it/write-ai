@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { AIProvider, AIGeneratedData, HistoryItem, APIConfig } from "../types";
+import {
+  AIProvider,
+  AIGeneratedData,
+  AITitle,
+  HistoryItem,
+  APIConfig,
+} from "../types";
 
 // 定义文章配置状态类型
 interface ArticleState {
@@ -41,7 +47,8 @@ interface ArticleState {
   // 历史记录方法
   addHistoryItem: (item: HistoryItem) => void;
   deleteHistoryItem: (id: string) => void;
-  loadHistoryItem: (id: string) => void;
+  loadHistoryItem: (id: string) => AITitle | null | undefined;
+  updateHistoryItem: (id: string, updates: Partial<HistoryItem>) => void;
   clearHistory: () => void;
 }
 
@@ -111,6 +118,13 @@ export const useArticleStore = create<ArticleState>()(
           historyItems: state.historyItems.filter((item) => item.id !== id),
         })),
 
+      updateHistoryItem: (id, updates) =>
+        set((state) => ({
+          historyItems: state.historyItems.map((item) =>
+            item.id === id ? { ...item, ...updates } : item
+          ),
+        })),
+
       loadHistoryItem: (id) => {
         const item = get().historyItems.find((h) => h.id === id);
         if (item) {
@@ -119,10 +133,15 @@ export const useArticleStore = create<ArticleState>()(
             articleLength: item.articleLength,
             writingStyle: item.writingStyle,
             articleType: item.articleType,
+            language: item.language || "chinese", // 加载语言信息，默认中文
             currentGeneratedData: item.generatedData,
             generatedContent: item.generatedData.content,
           });
+
+          // 返回选中的标题，以便在 page.tsx 中使用
+          return item.selectedTitle;
         }
+        return null;
       },
 
       clearHistory: () => set({ historyItems: [] }),
@@ -135,6 +154,7 @@ export const useArticleStore = create<ArticleState>()(
         articleLength: state.articleLength,
         writingStyle: state.writingStyle,
         articleType: state.articleType,
+        language: state.language, // 持久化语言设置
         apiConfig: state.apiConfig,
         historyItems: state.historyItems,
       }),
