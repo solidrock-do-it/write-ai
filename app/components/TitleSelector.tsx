@@ -53,14 +53,14 @@ export default function TitleSelector({
       {isExpanded && (
         <div className="space-y-1 mt-2">
           {titles.map((title, index) => (
-            <button
+            <div
               key={index}
-              onClick={() => onSelectTitle(title)}
-              className={`w-full text-left  py-1 px-2 text-gray-500 rounded-lg transition-all group ${
+              className={`w-full text-left py-1 px-2 text-gray-500 rounded-lg transition-all group cursor-pointer ${
                 selectedTitle?.title === title.title
                   ? "bg-secondary/40 text-gray-900 shadow-lg"
                   : "bg-white hover:bg-secondary/20 hover:text-gray-900"
               }`}
+              onClick={() => onSelectTitle(title)}
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium flex-1">
@@ -75,6 +75,7 @@ export default function TitleSelector({
                         : ""
                     }`}
                     title="复制此标题"
+                    type="button"
                   >
                     {copiedTitle === title.title ? (
                       <Check
@@ -114,7 +115,7 @@ export default function TitleSelector({
                   </div>
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}

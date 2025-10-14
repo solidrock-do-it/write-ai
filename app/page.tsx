@@ -32,6 +32,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  Tooltip,
   cn,
 } from "@heroui/react";
 import { useArticleStore } from "./store/articleStore";
@@ -74,6 +75,7 @@ export default function AIArticleGenerator() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState<AITitle | null>(null);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
+  const [openPopovers, setOpenPopovers] = useState<Record<string, boolean>>({});
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // 使用 Zustand store
@@ -469,10 +471,10 @@ export default function AIArticleGenerator() {
       <div
         className={`${
           sidebarOpen ? "w-56" : "w-14"
-        } bg-white border-r border-gray-200 shadow-lg transition-all duration-300 flex flex-col`}
+        } bg-white border-r border-gray-200 shadow-lg transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-10`}
       >
         {/* Logo 区域 */}
-        <div className="p-2 border-b border-gray-200">
+        <div className="p-2 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
               <Sparkles className="w-6 h-6 text-white" />
@@ -487,7 +489,7 @@ export default function AIArticleGenerator() {
         </div>
 
         {/* 历史记录 */}
-        <div className="flex-1 overflow-y-auto py-2">
+        <div className="flex-1 overflow-y-auto py-2 min-h-0">
           <div>
             {sidebarOpen && historyItems.length === 0 ? (
               <div className="text-xs text-gray-400 text-center py-4">
@@ -496,75 +498,74 @@ export default function AIArticleGenerator() {
             ) : (
               <div className="space-y-0">
                 {historyItems.map((item) => (
-                  <Popover key={item.id} placement="right" showArrow>
-                    <PopoverTrigger>
-                      {sidebarOpen ? (
-                        <div
-                          className="group relative px-2 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
-                          onClick={() => loadHistoryItem(item.id)}
-                        >
-                          <div className="flex items-center justify-center gap-2 relative">
-                            <Clock size={16} />
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs font-medium text-gray-900 truncate">
-                                {item.generatedData.titles[0]?.title ||
-                                  item.keywords}
-                              </div>
-                              <div className="text-xs text-gray-500 truncate">
-                                {new Date(item.timestamp).toLocaleDateString()}
-                              </div>
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteHistoryItem(item.id);
-                              }}
-                              className="absolute right-0 my-auto opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded"
-                            >
-                              <X className="w-3 h-3 text-red-600" />
-                            </button>
-                          </div>
+                  <Tooltip
+                    key={item.id}
+                    placement="right"
+                    showArrow
+                    offset={10}
+                    content={
+                      <div className="p-2 max-w-xs">
+                        <div className="text-xs font-semibold mb-1 text-gray-900">
+                          {item.generatedData.titles[0]?.title || item.keywords}
                         </div>
-                      ) : (
-                        <Button
-                          key={item.id}
-                          onPress={() => loadHistoryItem(item.id)}
-                          size="md"
-                          title={
-                            item.generatedData.titles[0]?.title || item.keywords
-                          }
-                          variant="light"
-                          isIconOnly={!sidebarOpen}
-                          className="text-default/75 w-full"
-                        >
-                          <Clock size="22" />
-                        </Button>
-                      )}
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                      <div className="p-2">
-                        <div className="text-sm font-semibold mb-2">
-                          {item.generatedData.titles[0]?.title}
-                        </div>
-                        <div className="text-xs text-gray-600 line-clamp-3">
+                        <div className="text-xs text-gray-600 line-clamp-4 mb-2">
                           {item.generatedData.content
-                            .substring(0, 150)
-                            .replace(/[#*]/g, "")}
+                            .substring(0, 200)
+                            .replace(/[#*]/g, "")
+                            .trim()}
                           ...
                         </div>
-                        <div className="flex gap-1 mt-2 flex-wrap">
-                          {item.generatedData.tags.slice(0, 3).map((tag) => (
+                        <div className="flex gap-1 flex-wrap">
+                          {item.generatedData.tags.slice(0, 4).map((tag) => (
                             <span
                               key={tag}
-                              className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded"
+                              className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded"
                             >
-                              {tag}
+                              #{tag}
                             </span>
                           ))}
                         </div>
                       </div>
-                    </PopoverContent>
-                  </Popover>
+                    }
+                  >
+                    {sidebarOpen ? (
+                      <div
+                        className="group relative px-2 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
+                        onClick={() => loadHistoryItem(item.id)}
+                      >
+                        <div className="flex items-center justify-center gap-2 relative">
+                          <Clock size={16} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium text-gray-900 truncate">
+                              {item.generatedData.titles[0]?.title ||
+                                item.keywords}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {new Date(item.timestamp).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteHistoryItem(item.id);
+                            }}
+                            className="absolute right-0 my-auto opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded"
+                          >
+                            <X className="w-3 h-3 text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => loadHistoryItem(item.id)}
+                        className="p-1 hover:bg-gray-100 text-xs cursor-pointer flex justify-center"
+                      >
+                        <span className="line-clamp-2">
+                          {item.generatedData.tags.slice(0, 1)[0]}
+                        </span>
+                      </div>
+                    )}
+                  </Tooltip>
                 ))}
               </div>
             )}
@@ -572,7 +573,7 @@ export default function AIArticleGenerator() {
         </div>
 
         {/* 设置按钮 */}
-        <div className="p-1 border-t border-gray-200">
+        <div className="p-1 border-t border-gray-200 flex-shrink-0">
           <Button
             onPress={() => setSettingsOpen(true)}
             variant="light"
@@ -586,7 +587,7 @@ export default function AIArticleGenerator() {
         </div>
 
         {/* 收起/展开按钮 */}
-        <div className="p-1 border-t border-gray-200">
+        <div className="p-1 border-t border-gray-200 flex-shrink-0">
           <Button
             onPress={() => setSidebarOpen(!sidebarOpen)}
             variant="light"
@@ -607,7 +608,11 @@ export default function AIArticleGenerator() {
       </div>
 
       {/* 右侧主内容区 */}
-      <div className="flex-1 p-4 overflow-y-auto flex flex-col">
+      <div
+        className={`flex-1 p-4 overflow-y-auto flex flex-col transition-all duration-300 ${
+          sidebarOpen ? "ml-56" : "ml-14"
+        }`}
+      >
         <div className="w-full mx-auto space-y-4 flex-1 flex flex-col">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-lg h-auto">
             {/* 关键词输入区域 */}
@@ -629,9 +634,18 @@ export default function AIArticleGenerator() {
                 {optionSections.map((section) => {
                   const currentValue = getCurrentValue(section.stateKey);
                   const CurrentIcon = getOptionIcon(section, currentValue);
-
                   return (
-                    <Popover key={section.stateKey} placement="bottom">
+                    <Popover
+                      key={section.stateKey}
+                      placement="bottom"
+                      isOpen={openPopovers[section.stateKey] || false}
+                      onOpenChange={(open) =>
+                        setOpenPopovers((prev) => ({
+                          ...prev,
+                          [section.stateKey]: open,
+                        }))
+                      }
+                    >
                       <PopoverTrigger>
                         <Button
                           variant="light"
@@ -651,7 +665,7 @@ export default function AIArticleGenerator() {
                           selectionMode="single"
                           selectedKeys={[currentValue]}
                         >
-                          <ListboxSection title={section.title}>
+                          <ListboxSection>
                             {section.options.map((option) => {
                               const IconComponent = option.icon;
                               return (
@@ -666,6 +680,10 @@ export default function AIArticleGenerator() {
                                       section.stateKey,
                                       option.key
                                     );
+                                    setOpenPopovers((prev) => ({
+                                      ...prev,
+                                      [section.stateKey]: false,
+                                    }));
                                   }}
                                   textValue={option.key}
                                 >
@@ -681,7 +699,13 @@ export default function AIArticleGenerator() {
                 })}
 
                 {/* 语言选择器 */}
-                <Popover placement="bottom">
+                <Popover
+                  placement="bottom"
+                  isOpen={openPopovers["language"] || false}
+                  onOpenChange={(open) =>
+                    setOpenPopovers((prev) => ({ ...prev, language: open }))
+                  }
+                >
                   <PopoverTrigger>
                     <Button
                       variant="light"
@@ -701,21 +725,24 @@ export default function AIArticleGenerator() {
                       </div>
                       <div className="grid grid-cols-4 gap-1">
                         {supportedLanguages.map((lang) => (
-                          <button
+                          <Button
                             key={lang.key}
                             type="button"
-                            onClick={() => setLanguage(lang.key)}
-                            className={`px-2 py-1.5 text-xs rounded-lg transition-all flex items-center justify-between gap-1 ${
-                              language === lang.key
-                                ? "bg-gray-100 text-gray-900 font-medium"
-                                : "bg-gray-50 hover:bg-gray-100 text-gray-700"
-                            }`}
+                            onPress={() => {
+                              setLanguage(lang.key);
+                              setOpenPopovers((prev) => ({
+                                ...prev,
+                                language: false,
+                              }));
+                            }}
+                            variant="light"
+                            size="sm"
                           >
                             <span>{lang.label}</span>
                             {language === lang.key && (
-                              <Check className="w-3 h-3 text-purple-600 flex-shrink-0" />
+                              <Check className="w-3 h-3 text-gray-600 flex-shrink-0" />
                             )}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
