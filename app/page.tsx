@@ -22,6 +22,7 @@ import {
   Search,
   Megaphone,
   X,
+  Check,
 } from "lucide-react";
 import {
   Button,
@@ -39,6 +40,15 @@ import SettingsModal from "./components/SettingsModal";
 import TitleSelector from "./components/TitleSelector";
 import { AIGeneratedData, AITitle } from "./types";
 import { generatePrompt } from "./utils/promptGenerator";
+import {
+  copyToClipboard,
+  formatFullContent,
+  downloadAsDocx,
+  copySingleTag,
+  copyAllTags,
+  copyTitle,
+  copyContent,
+} from "./utils/contentUtils";
 
 // 定义选项数据结构
 type OptionItem = {
@@ -58,6 +68,7 @@ export default function AIArticleGenerator() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState<AITitle | null>(null);
+  const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // 使用 Zustand store
@@ -333,6 +344,108 @@ export default function AIArticleGenerator() {
     }
   };
 
+  // 复制完整内容（标题 + 标签 + 正文）
+  const handleCopyAll = async () => {
+    if (!currentGeneratedData) return;
+
+    const title =
+      selectedTitle?.title || currentGeneratedData.titles[0]?.title || "";
+    const tags = currentGeneratedData.tags || [];
+    const content = generatedContent;
+
+    const fullText = formatFullContent(title, tags, content);
+    const success = await copyToClipboard(fullText);
+
+    if (success) {
+      setCopySuccess("all");
+      setTimeout(() => setCopySuccess(null), 2000);
+    } else {
+      alert("复制失败，请重试");
+    }
+  };
+
+  // 下载为 Word 文档
+  const handleDownload = async () => {
+    if (!currentGeneratedData) return;
+
+    try {
+      const title =
+        selectedTitle?.title || currentGeneratedData.titles[0]?.title || "文章";
+      const tags = currentGeneratedData.tags || [];
+      const content = generatedContent;
+
+      await downloadAsDocx(title, tags, content);
+    } catch (error) {
+      console.error("Download error:", error);
+      alert("下载失败，请重试");
+    }
+  };
+
+  // 删除当前内容和相关历史记录
+  const handleDelete = () => {
+    if (!currentGeneratedData) return;
+
+    const confirmDelete = window.confirm(
+      "确定要删除当前内容和相关历史记录吗？此操作不可恢复。"
+    );
+
+    if (confirmDelete) {
+      // 查找并删除相关的历史记录
+      const relatedHistory = historyItems.find(
+        (item) =>
+          item.generatedData.titles[0]?.title ===
+            currentGeneratedData.titles[0]?.title &&
+          Math.abs(item.timestamp - Date.now()) < 60000 // 1分钟内的记录
+      );
+
+      if (relatedHistory) {
+        deleteHistoryItem(relatedHistory.id);
+      }
+
+      // 清空当前内容
+      setGeneratedContent("");
+      setCurrentGeneratedData(null);
+      setSelectedTitle(null);
+    }
+  };
+
+  // 复制单个标题
+  const handleCopyTitle = async (title: string) => {
+    const success = await copyTitle(title);
+    if (success) {
+      setCopySuccess(`title-${title}`);
+      setTimeout(() => setCopySuccess(null), 2000);
+    }
+  };
+
+  // 复制单个标签
+  const handleCopySingleTag = async (tag: string) => {
+    const success = await copySingleTag(tag);
+    if (success) {
+      setCopySuccess(`tag-${tag}`);
+      setTimeout(() => setCopySuccess(null), 2000);
+    }
+  };
+
+  // 复制所有标签
+  const handleCopyAllTags = async () => {
+    if (!currentGeneratedData?.tags) return;
+    const success = await copyAllTags(currentGeneratedData.tags);
+    if (success) {
+      setCopySuccess("tags");
+      setTimeout(() => setCopySuccess(null), 2000);
+    }
+  };
+
+  // 复制正文
+  const handleCopyContent = async () => {
+    const success = await copyContent(generatedContent);
+    if (success) {
+      setCopySuccess("content");
+      setTimeout(() => setCopySuccess(null), 2000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex">
       {/* 左侧边栏 */}
@@ -588,20 +701,27 @@ export default function AIArticleGenerator() {
               {generatedContent && (
                 <div className="flex items-center gap-2">
                   <button
-                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
-                    title="复制"
+                    onClick={handleCopyAll}
+                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900 relative"
+                    title="复制全部（标题+标签+正文）"
                   >
-                    <Copy className="w-4 h-4" />
+                    {copySuccess === "all" ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
                   </button>
                   <button
+                    onClick={handleDownload}
                     className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
-                    title="下载"
+                    title="下载为 Word 文档"
                   >
                     <Download className="w-4 h-4" />
                   </button>
                   <button
-                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
-                    title="清空"
+                    onClick={handleDelete}
+                    className="p-2 hover:bg-red-100 rounded-lg transition-colors text-gray-600 hover:text-red-600"
+                    title="删除当前内容和历史记录"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -612,28 +732,92 @@ export default function AIArticleGenerator() {
             <div className="p-6 flex-1 overflow-y-auto">
               {generatedContent ? (
                 <>
-                  {/* 标签显示 */}
-                  {currentGeneratedData && currentGeneratedData.tags && (
-                    <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-gray-200">
-                      {currentGeneratedData.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 text-sm bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full border border-purple-200"
+                  {/* 标题显示（可复制） */}
+                  {selectedTitle && (
+                    <div className="mb-4 pb-4 border-b border-gray-200">
+                      <div className="flex items-start justify-between group">
+                        <h1 className="text-2xl font-bold text-gray-900 flex-1">
+                          {selectedTitle.title}
+                        </h1>
+                        <button
+                          onClick={() => handleCopyTitle(selectedTitle.title)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-lg"
+                          title="复制标题"
                         >
-                          #{tag}
-                        </span>
-                      ))}
+                          {copySuccess === `title-${selectedTitle.title}` ? (
+                            <Check className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <Copy className="w-4 h-4 text-gray-600" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
 
-                  <div
-                    contentEditable
-                    suppressContentEditableWarning
-                    className="prose prose-gray max-w-none focus:outline-none text-gray-800 leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: generatedContent.replace(/\n/g, "<br/>"),
-                    }}
-                  />
+                  {/* 标签显示（可复制） */}
+                  {currentGeneratedData && currentGeneratedData.tags && (
+                    <div className="mb-4 pb-4 border-b border-gray-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <button
+                          onClick={handleCopyAllTags}
+                          className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                          title="复制所有标签"
+                        >
+                          {copySuccess === "tags" ? (
+                            <>
+                              <Check className="w-3 h-3 text-green-600" />
+                              <span className="text-green-600">已复制</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>复制全部</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {currentGeneratedData.tags.map((tag, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleCopySingleTag(tag)}
+                            className="px-3 py-1 text-sm bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full border border-purple-200 hover:border-purple-300 transition-all cursor-pointer group relative"
+                            title="点击复制此标签"
+                          >
+                            #{tag}
+                            {copySuccess === `tag-${tag}` && (
+                              <Check className="w-3 h-3 text-green-600 absolute -top-1 -right-1" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 正文显示（可复制） */}
+                  <div className="group relative">
+                    <div className="absolute top-0 right-0">
+                      <button
+                        onClick={handleCopyContent}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-lg"
+                        title="复制正文"
+                      >
+                        {copySuccess === "content" ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-gray-600" />
+                        )}
+                      </button>
+                    </div>
+                    <div
+                      contentEditable
+                      suppressContentEditableWarning
+                      className="prose prose-gray max-w-none focus:outline-none text-gray-800 leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: generatedContent.replace(/\n/g, "<br/>"),
+                      }}
+                    />
+                  </div>
                 </>
               ) : (
                 <div className="h-full flex items-center justify-center text-center">
