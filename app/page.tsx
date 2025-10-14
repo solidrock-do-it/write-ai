@@ -723,7 +723,7 @@ export default function AIArticleGenerator() {
                         输出语言（当前模型支持 {supportedLanguages.length}{" "}
                         种语言）
                       </div>
-                      <div className="grid grid-cols-4 gap-1">
+                      <div className="grid grid-cols-5 gap-1">
                         {supportedLanguages.map((lang) => (
                           <Button
                             key={lang.key}
