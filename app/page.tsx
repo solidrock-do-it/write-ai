@@ -13,8 +13,39 @@ import {
   Copy,
   RefreshCw,
   Trash2,
+  Clock,
+  Edit3,
+  Feather,
+  BookOpen,
+  Newspaper,
+  ShoppingCart,
+  Search,
+  Megaphone,
 } from "lucide-react";
-import { Listbox, ListboxItem, ListboxSection, cn } from "@heroui/react";
+import {
+  Button,
+  Listbox,
+  ListboxItem,
+  ListboxSection,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  cn,
+} from "@heroui/react";
+
+// 定义选项数据结构
+type OptionItem = {
+  key: string;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+type OptionSection = {
+  title: string;
+  stateKey: "articleLength" | "writingStyle" | "articleType";
+  options: OptionItem[];
+};
 
 export default function AIArticleGenerator() {
   const [keywords, setKeywords] = useState("");
@@ -24,6 +55,113 @@ export default function AIArticleGenerator() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // 定义所有配置选项
+  const optionSections: OptionSection[] = [
+    {
+      title: "文章长度",
+      stateKey: "articleLength",
+      options: [
+        {
+          key: "short",
+          label: "短文",
+          description: "(300-500字)",
+          icon: Feather,
+        },
+        {
+          key: "medium",
+          label: "中篇",
+          description: "800-1500字",
+          icon: Edit3,
+        },
+        {
+          key: "long",
+          label: "长文",
+          description: "2000字+",
+          icon: BookOpen,
+        },
+      ],
+    },
+    {
+      title: "写作风格",
+      stateKey: "writingStyle",
+      options: [
+        {
+          key: "article",
+          label: "正式专业",
+          description: "正式专业的文章",
+          icon: FileText,
+        },
+        {
+          key: "blog",
+          label: "轻松随意",
+          description: "轻松随意的博客文章",
+          icon: Feather,
+        },
+        {
+          key: "report",
+          label: "学术严谨",
+          description: "学术严谨的报告",
+          icon: BookOpen,
+        },
+        {
+          key: "creative",
+          label: "创意文学",
+          description: "富有创意的文学作品",
+          icon: Sparkles,
+        },
+        {
+          key: "marketing",
+          label: "营销推广",
+          description: "吸引人的营销内容",
+          icon: Megaphone,
+        },
+      ],
+    },
+    {
+      title: "文章类型",
+      stateKey: "articleType",
+      options: [
+        {
+          key: "blog",
+          label: "博客文章",
+          description: "适合发布在博客平台",
+          icon: FileText,
+        },
+        {
+          key: "news",
+          label: "新闻稿",
+          description: "适合新闻发布的稿件",
+          icon: Newspaper,
+        },
+        {
+          key: "product",
+          label: "产品描述",
+          description: "产品描述和介绍",
+          icon: ShoppingCart,
+        },
+        {
+          key: "seo",
+          label: "SEO文章",
+          description: "优化搜索引擎排名",
+          icon: Search,
+        },
+        {
+          key: "tutorial",
+          label: "教程指南",
+          description: "步骤清晰的教程指南",
+          icon: BookOpen,
+        },
+      ],
+    },
+  ];
+
+  // 处理选项点击
+  const handleOptionPress = (stateKey: string, value: string) => {
+    if (stateKey === "articleLength") setArticleLength(value);
+    else if (stateKey === "writingStyle") setWritingStyle(value);
+    else if (stateKey === "articleType") setArticleType(value);
+  };
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -37,15 +175,12 @@ export default function AIArticleGenerator() {
     }, 2000);
   };
 
-  function setContentType(value: string): void {
-    setArticleType(value);
-  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex">
       {/* 左侧边栏 */}
       <div
         className={`${
-          sidebarOpen ? "w-64" : "w-16"
+          sidebarOpen ? "w-44" : "w-16"
         } bg-white border-r border-gray-200 shadow-lg transition-all duration-300 flex flex-col`}
       >
         {/* Logo 区域 */}
@@ -63,190 +198,8 @@ export default function AIArticleGenerator() {
           </div>
         </div>
 
-        {/* 导航菜单 */}
-        <div className="flex-1 overflow-y-auto py-2">
-          <Listbox aria-label="Listbox menu with descriptions" variant="flat">
-            <ListboxSection showDivider title="Actions">
-              <ListboxItem
-                key="short"
-                description={sidebarOpen && "(300-500字)"}
-                startContent={<Settings className="w-5 h-5 flex-shrink-0" />}
-                onPress={() => setArticleLength("short")}
-                textValue="short"
-              >
-                {sidebarOpen && <span>短文</span>}
-              </ListboxItem>
-              <ListboxItem
-                key="medium"
-                description={sidebarOpen && "800-1500字"}
-                startContent={<Settings className="w-5 h-5 flex-shrink-0" />}
-                onPress={() => setArticleLength("medium")}
-                textValue="medium"
-              >
-                {sidebarOpen && <span>中篇</span>}
-              </ListboxItem>
-              <ListboxItem
-                key="long"
-                description={sidebarOpen && "2000字+"}
-                startContent={<Settings className="w-5 h-5 flex-shrink-0" />}
-                onPress={() => setArticleLength("long")}
-                showDivider
-                textValue="long"
-              >
-                {sidebarOpen && <span>长文</span>}
-              </ListboxItem>
-            </ListboxSection>
-            <ListboxSection title="Content Type">
-              <ListboxItem
-                key="article"
-                description={sidebarOpen && "标准文章"}
-                startContent={<Settings className="w-5 h-5 flex-shrink-0" />}
-                onPress={() => setContentType("article")}
-                textValue="article"
-              >
-                {sidebarOpen && <span>文章</span>}
-              </ListboxItem>
-              <ListboxItem
-                key="blog"
-                description={sidebarOpen && "博客文章"}
-                startContent={<Settings className="w-5 h-5 flex-shrink-0" />}
-                onPress={() => setContentType("blog")}
-                textValue="blog"
-              >
-                {sidebarOpen && <span>博客</span>}
-              </ListboxItem>
-              <ListboxItem
-                key="report"
-                description={sidebarOpen && "报告"}
-                startContent={<Settings className="w-5 h-5 flex-shrink-0" />}
-                onPress={() => setContentType("report")}
-                textValue="report"
-              >
-                {sidebarOpen && <span>报告</span>}
-              </ListboxItem>
-            </ListboxSection>
-          </Listbox>
-          {/* 配置选项 */}
-          {sidebarOpen && (
-            <div className="mt-6 px-2">
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase mb-3">
-                  写作风格
-                </h3>
-                <div className="space-y-1">
-                  <button
-                    onClick={() => setWritingStyle("professional")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      writingStyle === "professional"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    专业正式
-                  </button>
-                  <button
-                    onClick={() => setWritingStyle("casual")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      writingStyle === "casual"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    轻松随意
-                  </button>
-                  <button
-                    onClick={() => setWritingStyle("academic")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      writingStyle === "academic"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    学术严谨
-                  </button>
-                  <button
-                    onClick={() => setWritingStyle("creative")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      writingStyle === "creative"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    创意文学
-                  </button>
-                  <button
-                    onClick={() => setWritingStyle("marketing")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      writingStyle === "marketing"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    营销推广
-                  </button>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase mb-3">
-                  文章类型
-                </h3>
-                <div className="space-y-1">
-                  <button
-                    onClick={() => setArticleType("blog")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      articleType === "blog"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    博客文章
-                  </button>
-                  <button
-                    onClick={() => setArticleType("news")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      articleType === "news"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    新闻稿
-                  </button>
-                  <button
-                    onClick={() => setArticleType("product")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      articleType === "product"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    产品描述
-                  </button>
-                  <button
-                    onClick={() => setArticleType("seo")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      articleType === "seo"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    SEO文章
-                  </button>
-                  <button
-                    onClick={() => setArticleType("tutorial")}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                      articleType === "tutorial"
-                        ? "bg-purple-100 text-purple-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    教程指南
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* 历史记录 */}
+        <div className="flex-1 overflow-y-auto py-2">{/* 历史记录 */}</div>
 
         {/* 收起/展开按钮 */}
         <div className="p-2 border-t border-gray-200">
@@ -267,32 +220,82 @@ export default function AIArticleGenerator() {
       </div>
 
       {/* 右侧主内容区 */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex-1 p-4 overflow-y-auto">
+        <div className="w-full mx-auto space-y-4">
           {/* 关键词输入区域 */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg h-auto">
             <div className="flex items-stretch">
               <textarea
                 value={keywords}
+                name="keywords"
+                id="keywords-input"
+                rows={1}
                 onChange={(e) => setKeywords(e.target.value)}
                 placeholder="请输入文章关键词，多个关键词用逗号分隔..."
-                className="flex-1 h-32 bg-white px-6 py-4 text-gray-900 placeholder-gray-400 focus:outline-none resize-none border-r border-gray-200"
+                className=" rounded-2xl h-auto flex-1 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none resize-none border-none"
               />
-              <div className="flex items-center px-4">
+            </div>
+            <div className="flex items-center justify-between px-2 pb-2">
+              <div className="gap-2">
+                {optionSections.map((section) => (
+                  <Popover key={section.stateKey} placement="bottom">
+                    <PopoverTrigger>
+                      <Button
+                        variant="light"
+                        size="md"
+                        className="text-default/75"
+                      >
+                        {articleLength}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <Listbox
+                        aria-label="Listbox menu with descriptions"
+                        variant="flat"
+                      >
+                        <ListboxSection>
+                          {section.options.map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <ListboxItem
+                                key={option.key}
+                                description={sidebarOpen && option.description}
+                                startContent={
+                                  <IconComponent className="w-5 h-5 flex-shrink-0" />
+                                }
+                                onPress={() =>
+                                  handleOptionPress(
+                                    section.stateKey,
+                                    option.key
+                                  )
+                                }
+                                textValue={option.key}
+                              >
+                                {sidebarOpen && <span>{option.label}</span>}
+                              </ListboxItem>
+                            );
+                          })}
+                        </ListboxSection>
+                      </Listbox>
+                    </PopoverContent>
+                  </Popover>
+                ))}
+              </div>
+              <div>
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating || !keywords}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap"
                 >
                   {isGenerating ? (
                     <>
-                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      <RefreshCw className="w-4 h-4 animate-spin" />
                       生成中
                     </>
                   ) : (
                     <>
-                      <Wand2 className="w-5 h-5" />
-                      生成文章
+                      <Wand2 className="w-4 h-4" />
+                      生成
                     </>
                   )}
                 </button>
