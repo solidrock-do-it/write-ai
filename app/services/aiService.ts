@@ -1,13 +1,109 @@
 import { AIProvider, AIGeneratedData } from "../types";
 
+// 是否使用 Next.js API 代理来避开 CORS 问题
+// 开发环境: true (使用 API 代理,支持所有 AI 提供商)
+// 生产环境: false (直接调用,仅支持 Qwen)
+const USE_API_PROXY = process.env.NODE_ENV === "development";
+
 export interface GenerateOptions {
   provider: AIProvider;
   apiKey: string;
   prompt: string;
+  model: string; // 新增模型名称参数
   proxyUrl?: string; // 可选的代理服务器地址
   onChunk?: (chunk: string) => void;
   onComplete?: (data: AIGeneratedData) => void;
   onError?: (error: Error) => void;
+}
+
+/**
+ * 通过 Next.js API 代理调用 AI (非流式,一次性返回)
+ */
+async function generateViaProxy(options: GenerateOptions): Promise<void> {
+  const {
+    provider,
+    apiKey,
+    prompt,
+    model,
+    proxyUrl,
+    onChunk,
+    onComplete,
+    onError,
+  } = options;
+
+  try {
+    console.log(`[API Proxy] Using Next.js API route for ${provider}`);
+    console.log(`[API Proxy] Request payload:`, {
+      provider,
+      hasApiKey: !!apiKey,
+      promptLength: prompt?.length,
+      model,
+      proxyUrl,
+    });
+
+    const response = await fetch("/api/ai-proxy", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        provider,
+        apiKey,
+        prompt,
+        model,
+        proxyUrl,
+      }),
+    });
+
+    console.log(`[API Proxy] Response status: ${response.status}`);
+
+    if (!response.ok) {
+      // 尝试获取错误详情
+      let errorMessage = `API Proxy error: ${response.status} ${response.statusText}`;
+
+      try {
+        const contentType = response.headers.get("content-type");
+        console.log(`[API Proxy] Error content-type: ${contentType}`);
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          console.error("[API Proxy] Error response (JSON):", errorData);
+          errorMessage = errorData.error || errorMessage;
+        } else {
+          const errorText = await response.text();
+          console.error("[API Proxy] Error response (Text):", errorText);
+          errorMessage = errorText || errorMessage;
+        }
+      } catch (e) {
+        console.error("[API Proxy] Failed to parse error response:", e);
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    // 解析完整响应
+    const result = await response.json();
+    console.log(
+      `[API Proxy] Received content length: ${result.content?.length || 0}`
+    );
+
+    if (result.success && result.content) {
+      // 一次性显示全部内容
+      onChunk?.(result.content);
+
+      // 解析 AI 返回的数据
+      const parsedData = parseAIResponse(result.content);
+      if (parsedData) {
+        onComplete?.(parsedData);
+      } else {
+        throw new Error("Failed to parse response data");
+      }
+    } else {
+      throw new Error("No content in response");
+    }
+  } catch (error) {
+    onError?.(error as Error);
+  }
 }
 
 /**
@@ -72,9 +168,11 @@ async function generateWithQwen(options: GenerateOptions): Promise<void> {
   const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError } = options;
 
   try {
-    const apiUrl = proxyUrl
-      ? `${proxyUrl}/https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation`
-      : "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation";
+    const baseUrl =
+      "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation";
+    const apiUrl = proxyUrl ? `${proxyUrl}/${baseUrl}` : baseUrl;
+
+    console.log("Qwen API URL:", apiUrl);
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -101,7 +199,11 @@ async function generateWithQwen(options: GenerateOptions): Promise<void> {
     });
 
     if (!response.ok) {
-      throw new Error(`Qwen API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Qwen API error response:", errorText);
+      throw new Error(
+        `Qwen API error: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
 
     const reader = response.body?.getReader();
@@ -160,9 +262,11 @@ async function generateWithGemini(options: GenerateOptions): Promise<void> {
   const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError } = options;
 
   try {
-    const apiUrl = proxyUrl
-      ? `${proxyUrl}/https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:streamGenerateContent?key=${apiKey}`
-      : `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:streamGenerateContent?key=${apiKey}`;
+    // 构造基础 URL
+    const baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:streamGenerateContent?key=${apiKey}`;
+    const apiUrl = proxyUrl ? `${proxyUrl}/${baseUrl}` : baseUrl;
+
+    console.log("Gemini API URL:", apiUrl.replace(apiKey, "***"));
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -183,7 +287,11 @@ async function generateWithGemini(options: GenerateOptions): Promise<void> {
     });
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Gemini API error response:", errorText);
+      throw new Error(
+        `Gemini API error: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
 
     const reader = response.body?.getReader();
@@ -237,9 +345,10 @@ async function generateWithChatGPT(options: GenerateOptions): Promise<void> {
   const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError } = options;
 
   try {
-    const apiUrl = proxyUrl
-      ? `${proxyUrl}/https://api.openai.com/v1/chat/completions`
-      : "https://api.openai.com/v1/chat/completions";
+    const baseUrl = "https://api.openai.com/v1/chat/completions";
+    const apiUrl = proxyUrl ? `${proxyUrl}/${baseUrl}` : baseUrl;
+
+    console.log("ChatGPT API URL:", apiUrl);
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -260,7 +369,11 @@ async function generateWithChatGPT(options: GenerateOptions): Promise<void> {
     });
 
     if (!response.ok) {
-      throw new Error(`ChatGPT API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("ChatGPT API error response:", errorText);
+      throw new Error(
+        `ChatGPT API error: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
 
     const reader = response.body?.getReader();
@@ -316,6 +429,26 @@ async function generateWithChatGPT(options: GenerateOptions): Promise<void> {
  */
 export async function generateArticle(options: GenerateOptions): Promise<void> {
   const { provider } = options;
+
+  // 如果启用了 API 代理模式,统一使用代理路由
+  if (USE_API_PROXY) {
+    console.log(
+      `[AI Service] Using API proxy mode for ${provider} (NODE_ENV: ${process.env.NODE_ENV})`
+    );
+    return generateViaProxy(options);
+  }
+
+  // 直接调用模式 (仅在生产环境或禁用代理时)
+  console.log(
+    `[AI Service] Using direct call mode for ${provider} (NODE_ENV: ${process.env.NODE_ENV})`
+  );
+
+  // 如果不是 Qwen,在直接调用模式下给出警告
+  if (provider !== "qwen") {
+    console.warn(
+      `[AI Service] Warning: ${provider} may face CORS issues in direct call mode. Consider using Qwen or enabling API proxy.`
+    );
+  }
 
   switch (provider) {
     case "qwen":

@@ -269,10 +269,18 @@ export default function AIArticleGenerator() {
 
       let accumulatedText = "";
 
+      const model =
+        selectedProvider === "qwen"
+          ? apiConfig.qwenModel
+          : selectedProvider === "gemini"
+          ? apiConfig.geminiModel
+          : apiConfig.chatgptModel;
+
       await generateArticle({
         provider: selectedProvider,
         apiKey,
         prompt,
+        model,
         proxyUrl: apiConfig.proxyEnabled ? apiConfig.proxyUrl : undefined,
         onChunk: (chunk) => {
           accumulatedText += chunk;
@@ -298,12 +306,28 @@ export default function AIArticleGenerator() {
         },
         onError: (error) => {
           console.error("Generation error:", error);
-          alert(`生成失败: ${error.message}`);
+
+          let errorMessage = "生成失败";
+
+          // 根据错误类型提供更友好的提示
+          if (error.message.includes("Failed to fetch")) {
+            errorMessage = `网络请求失败,请检查:\n\n1. 网络连接是否正常\n2. API Key 是否正确\n3. 是否需要启用代理服务器\n4. 代理服务器地址是否正确 (当前: ${
+              apiConfig.proxyEnabled ? apiConfig.proxyUrl : "未启用"
+            })\n\n提示: 国内访问 Gemini/ChatGPT 需要使用代理`;
+          } else if (error.message.includes("401")) {
+            errorMessage = `API Key 验证失败,请检查:\n\n1. API Key 是否正确\n2. API Key 是否有效\n3. 是否有足够的配额`;
+          } else if (error.message.includes("403")) {
+            errorMessage = `访问被拒绝,请检查:\n\n1. API Key 权限是否正确\n2. 是否需要启用代理访问\n3. IP 地址是否被限制`;
+          } else {
+            errorMessage = `生成失败: ${error.message}`;
+          }
+
+          alert(errorMessage);
         },
       });
     } catch (error) {
       console.error("Error:", error);
-      alert("生成失败，请检查网络连接和 API 配置");
+      alert("生成失败,请检查控制台输出获取详细信息");
     } finally {
       setIsGenerating(false);
     }
@@ -465,7 +489,7 @@ export default function AIArticleGenerator() {
                 id="keywords-input"
                 rows={1}
                 onChange={handleKeywordsChange}
-                placeholder="请输入文章关键词，多个关键词用逗号分隔..."
+                placeholder="请输入文章关键词..."
                 className="rounded-2xl h-auto flex-1 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none resize-none border-none transition-[height] duration-200 ease-in-out overflow-hidden"
               />
             </div>

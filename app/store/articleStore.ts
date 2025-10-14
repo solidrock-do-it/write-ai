@@ -59,6 +59,9 @@ const defaultState = {
     selectedProvider: "qwen" as AIProvider,
     proxyEnabled: false,
     proxyUrl: "",
+    qwenModel: "qwen-plus",
+    geminiModel: "gemini-1.0-pro",
+    chatgptModel: "gpt-3.5-turbo",
   },
   historyItems: [],
 };

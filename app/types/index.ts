@@ -22,6 +22,9 @@ export interface APIConfig {
   selectedProvider: AIProvider;
   proxyEnabled: boolean;
   proxyUrl: string;
+  qwenModel: string;
+  geminiModel: string;
+  chatgptModel: string;
 }
 
 // 历史记录项
