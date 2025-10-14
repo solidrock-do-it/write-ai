@@ -4,6 +4,7 @@ export interface GenerateOptions {
   provider: AIProvider;
   apiKey: string;
   prompt: string;
+  proxyUrl?: string; // 可选的代理服务器地址
   onChunk?: (chunk: string) => void;
   onComplete?: (data: AIGeneratedData) => void;
   onError?: (error: Error) => void;
@@ -68,35 +69,36 @@ export function parseAIResponse(text: string): AIGeneratedData | null {
  * 调用通义千问 API
  */
 async function generateWithQwen(options: GenerateOptions): Promise<void> {
-  const { apiKey, prompt, onChunk, onComplete, onError } = options;
+  const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError } = options;
 
   try {
-    const response = await fetch(
-      "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-          "X-DashScope-SSE": "enable",
+    const apiUrl = proxyUrl
+      ? `${proxyUrl}/https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation`
+      : "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation";
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "X-DashScope-SSE": "enable",
+      },
+      body: JSON.stringify({
+        model: "qwen-plus",
+        input: {
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
         },
-        body: JSON.stringify({
-          model: "qwen-plus",
-          input: {
-            messages: [
-              {
-                role: "user",
-                content: prompt,
-              },
-            ],
-          },
-          parameters: {
-            result_format: "message",
-            incremental_output: true,
-          },
-        }),
-      }
-    );
+        parameters: {
+          result_format: "message",
+          incremental_output: true,
+        },
+      }),
+    });
 
     if (!response.ok) {
       throw new Error(`Qwen API error: ${response.statusText}`);
@@ -155,29 +157,30 @@ async function generateWithQwen(options: GenerateOptions): Promise<void> {
  * 调用 Gemini API
  */
 async function generateWithGemini(options: GenerateOptions): Promise<void> {
-  const { apiKey, prompt, onChunk, onComplete, onError } = options;
+  const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError } = options;
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:streamGenerateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
+    const apiUrl = proxyUrl
+      ? `${proxyUrl}/https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:streamGenerateContent?key=${apiKey}`
+      : `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:streamGenerateContent?key=${apiKey}`;
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt,
+              },
+            ],
+          },
+        ],
+      }),
+    });
 
     if (!response.ok) {
       throw new Error(`Gemini API error: ${response.statusText}`);
@@ -231,10 +234,14 @@ async function generateWithGemini(options: GenerateOptions): Promise<void> {
  * 调用 ChatGPT API
  */
 async function generateWithChatGPT(options: GenerateOptions): Promise<void> {
-  const { apiKey, prompt, onChunk, onComplete, onError } = options;
+  const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError } = options;
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const apiUrl = proxyUrl
+      ? `${proxyUrl}/https://api.openai.com/v1/chat/completions`
+      : "https://api.openai.com/v1/chat/completions";
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

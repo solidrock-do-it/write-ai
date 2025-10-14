@@ -38,6 +38,7 @@ import { generateArticle } from "./services/aiService";
 import SettingsModal from "./components/SettingsModal";
 import TitleSelector from "./components/TitleSelector";
 import { AIGeneratedData, AITitle } from "./types";
+import { generatePrompt } from "./utils/promptGenerator";
 
 // 定义选项数据结构
 type OptionItem = {
@@ -258,13 +259,13 @@ export default function AIArticleGenerator() {
     setCurrentGeneratedData(null);
 
     try {
-      // 获取提示词
-      const promptResponse = await fetch(
-        `/api/prompt?keywords=${encodeURIComponent(
-          keywords
-        )}&articleLength=${articleLength}&writingStyle=${writingStyle}&articleType=${articleType}`
-      );
-      const { prompt } = await promptResponse.json();
+      // 生成提示词（客户端生成）
+      const prompt = generatePrompt({
+        keywords,
+        articleLength,
+        writingStyle,
+        articleType,
+      });
 
       let accumulatedText = "";
 
@@ -272,6 +273,7 @@ export default function AIArticleGenerator() {
         provider: selectedProvider,
         apiKey,
         prompt,
+        proxyUrl: apiConfig.proxyEnabled ? apiConfig.proxyUrl : undefined,
         onChunk: (chunk) => {
           accumulatedText += chunk;
           setGeneratedContent(accumulatedText);
@@ -312,7 +314,7 @@ export default function AIArticleGenerator() {
       {/* 左侧边栏 */}
       <div
         className={`${
-          sidebarOpen ? "w-44" : "w-16"
+          sidebarOpen ? "w-56" : "w-14"
         } bg-white border-r border-gray-200 shadow-lg transition-all duration-300 flex flex-col`}
       >
         {/* Logo 区域 */}
@@ -416,12 +418,13 @@ export default function AIArticleGenerator() {
         </div>
 
         {/* 设置按钮 */}
-        <div className="p-2 border-t border-gray-200">
+        <div className="p-1 border-t border-gray-200">
           <Button
             onPress={() => setSettingsOpen(true)}
             variant="light"
-            color="default"
             size="md"
+            isIconOnly={!sidebarOpen}
+            className="text-default/75 w-full"
           >
             <Settings className="w-4 h-4" />
             {sidebarOpen && <span>设置</span>}
@@ -429,10 +432,13 @@ export default function AIArticleGenerator() {
         </div>
 
         {/* 收起/展开按钮 */}
-        <div className="p-2 border-t border-gray-200">
+        <div className="p-1 border-t border-gray-200">
           <Button
             onPress={() => setSidebarOpen(!sidebarOpen)}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+            variant="light"
+            size="md"
+            isIconOnly={!sidebarOpen}
+            className="text-default/75 w-full"
           >
             {sidebarOpen ? (
               <>
@@ -447,8 +453,8 @@ export default function AIArticleGenerator() {
       </div>
 
       {/* 右侧主内容区 */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        <div className="w-full mx-auto space-y-4">
+      <div className="flex-1 p-4 overflow-y-auto flex flex-col">
+        <div className="w-full mx-auto space-y-4 flex-1 flex flex-col">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-lg h-auto">
             {/* 关键词输入区域 */}
             <div className="flex items-stretch">
@@ -552,8 +558,8 @@ export default function AIArticleGenerator() {
           )}
 
           {/* 富文本编辑区域 */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-            <div className="border-b border-gray-200 px-6 py-3 flex items-center justify-between bg-gray-50">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden flex-1 flex flex-col">
+            <div className="border-b border-gray-200 px-6 py-3 flex items-center justify-between bg-gray-50 flex-shrink-0">
               <h2 className="text-sm font-semibold text-gray-700">生成结果</h2>
               {generatedContent && (
                 <div className="flex items-center gap-2">
@@ -579,7 +585,7 @@ export default function AIArticleGenerator() {
               )}
             </div>
 
-            <div className="p-6">
+            <div className="p-6 flex-1 overflow-y-auto">
               {generatedContent ? (
                 <>
                   {/* 标签显示 */}
@@ -599,14 +605,14 @@ export default function AIArticleGenerator() {
                   <div
                     contentEditable
                     suppressContentEditableWarning
-                    className="prose prose-gray max-w-none min-h-[500px] focus:outline-none text-gray-800 leading-relaxed"
+                    className="prose prose-gray max-w-none focus:outline-none text-gray-800 leading-relaxed"
                     dangerouslySetInnerHTML={{
                       __html: generatedContent.replace(/\n/g, "<br/>"),
                     }}
                   />
                 </>
               ) : (
-                <div className="min-h-[500px] flex items-center justify-center text-center">
+                <div className="h-full flex items-center justify-center text-center">
                   <div>
                     <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
                       <Sparkles className="w-10 h-10 text-purple-500" />

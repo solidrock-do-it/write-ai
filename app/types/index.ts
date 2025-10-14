@@ -20,6 +20,8 @@ export interface APIConfig {
   geminiApiKey: string;
   chatgptApiKey: string;
   selectedProvider: AIProvider;
+  proxyEnabled: boolean;
+  proxyUrl: string;
 }
 
 // 历史记录项

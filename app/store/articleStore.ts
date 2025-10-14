@@ -57,6 +57,8 @@ const defaultState = {
     geminiApiKey: "",
     chatgptApiKey: "",
     selectedProvider: "qwen" as AIProvider,
+    proxyEnabled: false,
+    proxyUrl: "",
   },
   historyItems: [],
 };

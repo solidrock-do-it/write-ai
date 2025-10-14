@@ -11,10 +11,12 @@ import {
   Input,
   Select,
   SelectItem,
+  Switch,
+  Divider,
 } from "@heroui/react";
 import { useArticleStore } from "../store/articleStore";
 import { AIProvider } from "../types";
-import { Key } from "lucide-react";
+import { Key, Globe } from "lucide-react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -106,6 +108,50 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               type="password"
               description="从 OpenAI 获取 API Key"
             />
+
+            <Divider className="my-4" />
+
+            {/* 代理设置 */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <Globe className="w-4 h-4" />
+                代理服务器设置
+              </h3>
+
+              <div className="space-y-3">
+                <Switch
+                  isSelected={localConfig.proxyEnabled}
+                  onValueChange={(checked) =>
+                    setLocalConfig({
+                      ...localConfig,
+                      proxyEnabled: checked,
+                    })
+                  }
+                >
+                  <div className="flex flex-col">
+                    <span className="text-sm">启用代理服务器</span>
+                    <span className="text-xs text-gray-500">
+                      通过代理服务器访问 AI API
+                    </span>
+                  </div>
+                </Switch>
+
+                {localConfig.proxyEnabled && (
+                  <Input
+                    label="代理服务器地址"
+                    placeholder="http://localhost:7890 或 https://your-proxy.com"
+                    value={localConfig.proxyUrl}
+                    onChange={(e) =>
+                      setLocalConfig({
+                        ...localConfig,
+                        proxyUrl: e.target.value,
+                      })
+                    }
+                    description="输入完整的代理服务器 URL（包含 http:// 或 https://）"
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </ModalBody>
         <ModalFooter>
