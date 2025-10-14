@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Sparkles,
   FileText,
@@ -21,6 +21,7 @@ import {
   ShoppingCart,
   Search,
   Megaphone,
+  X,
 } from "lucide-react";
 import {
   Button,
@@ -33,6 +34,10 @@ import {
   cn,
 } from "@heroui/react";
 import { useArticleStore } from "./store/articleStore";
+import { generateArticle } from "./services/aiService";
+import SettingsModal from "./components/SettingsModal";
+import TitleSelector from "./components/TitleSelector";
+import { AIGeneratedData, AITitle } from "./types";
 
 // 定义选项数据结构
 type OptionItem = {
@@ -50,6 +55,9 @@ type OptionSection = {
 
 export default function AIArticleGenerator() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectedTitle, setSelectedTitle] = useState<AITitle | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // 使用 Zustand store
   const {
@@ -59,13 +67,43 @@ export default function AIArticleGenerator() {
     articleType,
     generatedContent,
     isGenerating,
+    currentGeneratedData,
+    apiConfig,
+    historyItems,
     setKeywords,
     setArticleLength,
     setWritingStyle,
     setArticleType,
     setGeneratedContent,
     setIsGenerating,
+    setCurrentGeneratedData,
+    addHistoryItem,
+    deleteHistoryItem,
+    loadHistoryItem,
   } = useArticleStore();
+
+  // 自动调整 textarea 高度
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    // 重置高度以获取正确的 scrollHeight
+    textarea.style.height = "auto";
+    // 设置最小高度 48px，最大高度 200px
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, 48), 200);
+    textarea.style.height = `${newHeight}px`;
+  };
+
+  // 处理 textarea 变化
+  const handleKeywordsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setKeywords(e.target.value);
+    adjustTextareaHeight();
+  };
+
+  // 初始化和响应 keywords 变化
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [keywords]);
 
   // 定义所有配置选项
   const optionSections: OptionSection[] = [
@@ -188,16 +226,85 @@ export default function AIArticleGenerator() {
     return option?.label || key;
   };
 
-  const handleGenerate = () => {
+  // 根据 key 和 section 获取对应的 icon
+  const getOptionIcon = (section: OptionSection, key: string) => {
+    const option = section.options.find((opt) => opt.key === key);
+    return option?.icon;
+  };
+
+  const handleGenerate = async () => {
+    if (!keywords.trim()) return;
+
+    // 检查 API Key
+    const selectedProvider = apiConfig.selectedProvider;
+    let apiKey = "";
+
+    if (selectedProvider === "qwen") {
+      apiKey = apiConfig.qwenApiKey;
+    } else if (selectedProvider === "gemini") {
+      apiKey = apiConfig.geminiApiKey;
+    } else if (selectedProvider === "chatgpt") {
+      apiKey = apiConfig.chatgptApiKey;
+    }
+
+    if (!apiKey) {
+      alert(`请先在设置中配置 ${selectedProvider} 的 API Key`);
+      setSettingsOpen(true);
+      return;
+    }
+
     setIsGenerating(true);
-    setTimeout(() => {
-      setGeneratedContent(
-        `# ${
-          keywords || "示例标题"
-        }\n\n这是根据关键词"${keywords}"生成的文章内容...\n\n## 第一部分\n\n人工智能技术的快速发展正在改变我们的生活方式。从智能助手到自动驾驶，AI的应用场景越来越广泛。\n\n## 第二部分\n\n在内容创作领域，AI工具能够帮助创作者快速生成高质量的文章，极大地提升了工作效率。\n\n## 总结\n\n随着技术的不断进步，AI将在更多领域发挥重要作用，为人类社会带来更多价值。`
+    setGeneratedContent("");
+    setCurrentGeneratedData(null);
+
+    try {
+      // 获取提示词
+      const promptResponse = await fetch(
+        `/api/prompt?keywords=${encodeURIComponent(
+          keywords
+        )}&articleLength=${articleLength}&writingStyle=${writingStyle}&articleType=${articleType}`
       );
+      const { prompt } = await promptResponse.json();
+
+      let accumulatedText = "";
+
+      await generateArticle({
+        provider: selectedProvider,
+        apiKey,
+        prompt,
+        onChunk: (chunk) => {
+          accumulatedText += chunk;
+          setGeneratedContent(accumulatedText);
+        },
+        onComplete: (data: AIGeneratedData) => {
+          setCurrentGeneratedData(data);
+          setGeneratedContent(data.content);
+
+          // 保存到历史记录
+          const historyItem = {
+            id: Date.now().toString(),
+            timestamp: Date.now(),
+            keywords,
+            articleLength,
+            writingStyle,
+            articleType,
+            generatedData: data,
+            provider: selectedProvider,
+          };
+
+          addHistoryItem(historyItem);
+        },
+        onError: (error) => {
+          console.error("Generation error:", error);
+          alert(`生成失败: ${error.message}`);
+        },
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      alert("生成失败，请检查网络连接和 API 配置");
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -224,12 +331,107 @@ export default function AIArticleGenerator() {
         </div>
 
         {/* 历史记录 */}
-        <div className="flex-1 overflow-y-auto py-2">{/* 历史记录 */}</div>
+        <div className="flex-1 overflow-y-auto py-2">
+          {sidebarOpen && (
+            <div className="px-2">
+              {historyItems.length === 0 ? (
+                <div className="text-xs text-gray-400 text-center py-4">
+                  暂无记录
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {historyItems.map((item) => (
+                    <Popover key={item.id} placement="right" showArrow>
+                      <PopoverTrigger>
+                        <div
+                          className="group relative px-2 py-2 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors"
+                          onClick={() => loadHistoryItem(item.id)}
+                        >
+                          <div className="flex items-start gap-2">
+                            <Clock className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium text-gray-900 truncate">
+                                {item.generatedData.titles[0]?.title ||
+                                  item.keywords}
+                              </div>
+                              <div className="text-xs text-gray-500 truncate">
+                                {new Date(item.timestamp).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteHistoryItem(item.id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded"
+                            >
+                              <X className="w-3 h-3 text-red-600" />
+                            </button>
+                          </div>
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80">
+                        <div className="p-2">
+                          <div className="text-sm font-semibold mb-2">
+                            {item.generatedData.titles[0]?.title}
+                          </div>
+                          <div className="text-xs text-gray-600 line-clamp-3">
+                            {item.generatedData.content
+                              .substring(0, 150)
+                              .replace(/[#*]/g, "")}
+                            ...
+                          </div>
+                          <div className="flex gap-1 mt-2 flex-wrap">
+                            {item.generatedData.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {!sidebarOpen && historyItems.length > 0 && (
+            <div className="flex flex-col items-center gap-2">
+              {historyItems.slice(0, 5).map((item) => (
+                <Button
+                  key={item.id}
+                  onPress={() => loadHistoryItem(item.id)}
+                  className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors"
+                  title={item.generatedData.titles[0]?.title || item.keywords}
+                >
+                  <Clock className="w-4 h-4 text-gray-600" />
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 设置按钮 */}
+        <div className="p-2 border-t border-gray-200">
+          <Button
+            onPress={() => setSettingsOpen(true)}
+            variant="light"
+            color="default"
+            size="md"
+          >
+            <Settings className="w-4 h-4" />
+            {sidebarOpen && <span>设置</span>}
+          </Button>
+        </div>
 
         {/* 收起/展开按钮 */}
         <div className="p-2 border-t border-gray-200">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+          <Button
+            onPress={() => setSidebarOpen(!sidebarOpen)}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
           >
             {sidebarOpen ? (
@@ -240,76 +442,83 @@ export default function AIArticleGenerator() {
             ) : (
               <ChevronRight className="w-4 h-4" />
             )}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* 右侧主内容区 */}
       <div className="flex-1 p-4 overflow-y-auto">
         <div className="w-full mx-auto space-y-4">
-          {/* 关键词输入区域 */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-lg h-auto">
+            {/* 关键词输入区域 */}
             <div className="flex items-stretch">
               <textarea
+                ref={textareaRef}
                 value={keywords}
                 name="keywords"
                 id="keywords-input"
                 rows={1}
-                onChange={(e) => setKeywords(e.target.value)}
+                onChange={handleKeywordsChange}
                 placeholder="请输入文章关键词，多个关键词用逗号分隔..."
-                className=" rounded-2xl h-auto flex-1 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none resize-none border-none"
+                className="rounded-2xl h-auto flex-1 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none resize-none border-none transition-[height] duration-200 ease-in-out overflow-hidden"
               />
             </div>
+            {/* 关键词选项区域 */}
             <div className="flex items-center justify-between px-2 pb-2">
               <div className="flex gap-2">
-                {optionSections.map((section) => (
-                  <Popover key={section.stateKey} placement="bottom">
-                    <PopoverTrigger>
-                      <Button
-                        variant="light"
-                        size="sm"
-                        className="text-default/75"
-                      >
-                        {getOptionLabel(
-                          section,
-                          getCurrentValue(section.stateKey)
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <Listbox
-                        aria-label={section.title}
-                        variant="flat"
-                        selectionMode="single"
-                        selectedKeys={[getCurrentValue(section.stateKey)]}
-                      >
-                        <ListboxSection title={section.title}>
-                          {section.options.map((option) => {
-                            const IconComponent = option.icon;
-                            return (
-                              <ListboxItem
-                                key={option.key}
-                                description={option.description}
-                                startContent={
-                                  <IconComponent className="w-5 h-5 flex-shrink-0" />
-                                }
-                                onPress={() =>
-                                  handleOptionPress(
-                                    section.stateKey,
-                                    option.key
-                                  )
-                                }
-                                textValue={option.key}
-                              >
-                                <span>{option.label}</span>
-                              </ListboxItem>
-                            );
-                          })}
-                        </ListboxSection>
-                      </Listbox>
-                    </PopoverContent>
-                  </Popover>
-                ))}
+                {optionSections.map((section) => {
+                  const currentValue = getCurrentValue(section.stateKey);
+                  const CurrentIcon = getOptionIcon(section, currentValue);
+
+                  return (
+                    <Popover key={section.stateKey} placement="bottom">
+                      <PopoverTrigger>
+                        <Button
+                          variant="light"
+                          size="md"
+                          className="text-default/75"
+                          startContent={
+                            CurrentIcon && <CurrentIcon className="w-4 h-4" />
+                          }
+                        >
+                          {getOptionLabel(section, currentValue)}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        <Listbox
+                          aria-label={section.title}
+                          variant="flat"
+                          selectionMode="single"
+                          selectedKeys={[currentValue]}
+                        >
+                          <ListboxSection title={section.title}>
+                            {section.options.map((option) => {
+                              const IconComponent = option.icon;
+                              return (
+                                <ListboxItem
+                                  key={option.key}
+                                  description={option.description}
+                                  startContent={
+                                    <IconComponent className="w-5 h-5 flex-shrink-0" />
+                                  }
+                                  onPress={() => {
+                                    handleOptionPress(
+                                      section.stateKey,
+                                      option.key
+                                    );
+                                  }}
+                                  textValue={option.key}
+                                >
+                                  <span>{option.label}</span>
+                                </ListboxItem>
+                              );
+                            })}
+                          </ListboxSection>
+                        </Listbox>
+                      </PopoverContent>
+                    </Popover>
+                  );
+                })}
               </div>
               <div>
                 <button
@@ -332,6 +541,15 @@ export default function AIArticleGenerator() {
               </div>
             </div>
           </div>
+
+          {/* 标题选择器 */}
+          {currentGeneratedData && currentGeneratedData.titles && (
+            <TitleSelector
+              titles={currentGeneratedData.titles}
+              selectedTitle={selectedTitle}
+              onSelectTitle={setSelectedTitle}
+            />
+          )}
 
           {/* 富文本编辑区域 */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
@@ -363,14 +581,30 @@ export default function AIArticleGenerator() {
 
             <div className="p-6">
               {generatedContent ? (
-                <div
-                  contentEditable
-                  suppressContentEditableWarning
-                  className="prose prose-gray max-w-none min-h-[500px] focus:outline-none text-gray-800 leading-relaxed"
-                  dangerouslySetInnerHTML={{
-                    __html: generatedContent.replace(/\n/g, "<br/>"),
-                  }}
-                />
+                <>
+                  {/* 标签显示 */}
+                  {currentGeneratedData && currentGeneratedData.tags && (
+                    <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-gray-200">
+                      {currentGeneratedData.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 text-sm bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full border border-purple-200"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="prose prose-gray max-w-none min-h-[500px] focus:outline-none text-gray-800 leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: generatedContent.replace(/\n/g, "<br/>"),
+                    }}
+                  />
+                </>
               ) : (
                 <div className="min-h-[500px] flex items-center justify-center text-center">
                   <div>
@@ -390,6 +624,12 @@ export default function AIArticleGenerator() {
           </div>
         </div>
       </div>
+
+      {/* 设置弹窗 */}
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </div>
   );
 }
