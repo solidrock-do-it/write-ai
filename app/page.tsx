@@ -32,6 +32,7 @@ import {
   PopoverTrigger,
   cn,
 } from "@heroui/react";
+import { useArticleStore } from "./store/articleStore";
 
 // 定义选项数据结构
 type OptionItem = {
@@ -48,13 +49,23 @@ type OptionSection = {
 };
 
 export default function AIArticleGenerator() {
-  const [keywords, setKeywords] = useState("");
-  const [articleLength, setArticleLength] = useState("medium");
-  const [writingStyle, setWritingStyle] = useState("professional");
-  const [articleType, setArticleType] = useState("blog");
-  const [generatedContent, setGeneratedContent] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // 使用 Zustand store
+  const {
+    keywords,
+    articleLength,
+    writingStyle,
+    articleType,
+    generatedContent,
+    isGenerating,
+    setKeywords,
+    setArticleLength,
+    setWritingStyle,
+    setArticleType,
+    setGeneratedContent,
+    setIsGenerating,
+  } = useArticleStore();
 
   // 定义所有配置选项
   const optionSections: OptionSection[] = [
@@ -163,6 +174,20 @@ export default function AIArticleGenerator() {
     else if (stateKey === "articleType") setArticleType(value);
   };
 
+  // 根据 stateKey 获取当前选中的值
+  const getCurrentValue = (stateKey: string) => {
+    if (stateKey === "articleLength") return articleLength;
+    if (stateKey === "writingStyle") return writingStyle;
+    if (stateKey === "articleType") return articleType;
+    return "";
+  };
+
+  // 根据 key 和 section 获取对应的 label
+  const getOptionLabel = (section: OptionSection, key: string) => {
+    const option = section.options.find((opt) => opt.key === key);
+    return option?.label || key;
+  };
+
   const handleGenerate = () => {
     setIsGenerating(true);
     setTimeout(() => {
@@ -236,30 +261,35 @@ export default function AIArticleGenerator() {
               />
             </div>
             <div className="flex items-center justify-between px-2 pb-2">
-              <div className="gap-2">
+              <div className="flex gap-2">
                 {optionSections.map((section) => (
                   <Popover key={section.stateKey} placement="bottom">
                     <PopoverTrigger>
                       <Button
                         variant="light"
-                        size="md"
+                        size="sm"
                         className="text-default/75"
                       >
-                        {articleLength}
+                        {getOptionLabel(
+                          section,
+                          getCurrentValue(section.stateKey)
+                        )}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent>
                       <Listbox
-                        aria-label="Listbox menu with descriptions"
+                        aria-label={section.title}
                         variant="flat"
+                        selectionMode="single"
+                        selectedKeys={[getCurrentValue(section.stateKey)]}
                       >
-                        <ListboxSection>
+                        <ListboxSection title={section.title}>
                           {section.options.map((option) => {
                             const IconComponent = option.icon;
                             return (
                               <ListboxItem
                                 key={option.key}
-                                description={sidebarOpen && option.description}
+                                description={option.description}
                                 startContent={
                                   <IconComponent className="w-5 h-5 flex-shrink-0" />
                                 }
@@ -271,7 +301,7 @@ export default function AIArticleGenerator() {
                                 }
                                 textValue={option.key}
                               >
-                                {sidebarOpen && <span>{option.label}</span>}
+                                <span>{option.label}</span>
                               </ListboxItem>
                             );
                           })}
