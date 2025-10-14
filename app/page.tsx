@@ -44,7 +44,6 @@ import {
   copyToClipboard,
   formatFullContent,
   downloadAsDocx,
-  copySingleTag,
   copyAllTags,
   copyTitle,
   copyContent,
@@ -418,15 +417,6 @@ export default function AIArticleGenerator() {
     }
   };
 
-  // 复制单个标签
-  const handleCopySingleTag = async (tag: string) => {
-    const success = await copySingleTag(tag);
-    if (success) {
-      setCopySuccess(`tag-${tag}`);
-      setTimeout(() => setCopySuccess(null), 2000);
-    }
-  };
-
   // 复制所有标签
   const handleCopyAllTags = async () => {
     if (!currentGeneratedData?.tags) return;
@@ -696,19 +686,23 @@ export default function AIArticleGenerator() {
 
           {/* 富文本编辑区域 */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden flex-1 flex flex-col">
-            <div className="border-b border-gray-200 px-6 py-3 flex items-center justify-between bg-gray-50 flex-shrink-0">
+            <div className="border-b border-gray-200 px-4 py-1 flex items-center justify-between bg-gray-50 flex-shrink-0">
               <h2 className="text-sm font-semibold text-gray-700">生成结果</h2>
               {generatedContent && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleCopyAll}
-                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900 relative"
+                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
                     title="复制全部（标题+标签+正文）"
                   >
                     {copySuccess === "all" ? (
-                      <Check className="w-4 h-4 text-green-600" />
+                      <>
+                        <Check className="w-4 h-4 text-green-600" />
+                      </>
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <>
+                        <Copy className="w-4 h-4" />
+                      </>
                     )}
                   </button>
                   <button
@@ -729,67 +723,58 @@ export default function AIArticleGenerator() {
               )}
             </div>
 
-            <div className="p-6 flex-1 overflow-y-auto">
+            <div className="px-4 py-2 flex-1 overflow-y-auto">
               {generatedContent ? (
                 <>
                   {/* 标题显示（可复制） */}
                   {selectedTitle && (
-                    <div className="mb-4 pb-4 border-b border-gray-200">
+                    <div className="mb-2 pb-2 border-b border-gray-200">
                       <div className="flex items-start justify-between group">
                         <h1 className="text-2xl font-bold text-gray-900 flex-1">
                           {selectedTitle.title}
                         </h1>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleCopyTitle(selectedTitle.title)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-lg"
+                            title="复制此标题"
+                          >
+                            {copySuccess === `title-${selectedTitle.title}` ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4 text-gray-600" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 标签显示 */}
+                  {currentGeneratedData && currentGeneratedData.tags && (
+                    <div className="mb-2 pb-2 border-b border-gray-200 flex items-center justify-between group">
+                      <div className="flex flex-wrap gap-2">
+                        {currentGeneratedData.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="px-3 py-1 text-sm bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full border border-purple-200"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleCopyTitle(selectedTitle.title)}
+                          onClick={() => handleCopyAllTags()}
                           className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-lg"
-                          title="复制标题"
+                          title="复制全部标签"
                         >
-                          {copySuccess === `title-${selectedTitle.title}` ? (
+                          {copySuccess === `tags` ? (
                             <Check className="w-4 h-4 text-green-600" />
                           ) : (
                             <Copy className="w-4 h-4 text-gray-600" />
                           )}
                         </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 标签显示（可复制） */}
-                  {currentGeneratedData && currentGeneratedData.tags && (
-                    <div className="mb-4 pb-4 border-b border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <button
-                          onClick={handleCopyAllTags}
-                          className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                          title="复制所有标签"
-                        >
-                          {copySuccess === "tags" ? (
-                            <>
-                              <Check className="w-3 h-3 text-green-600" />
-                              <span className="text-green-600">已复制</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3" />
-                              <span>复制全部</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {currentGeneratedData.tags.map((tag, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleCopySingleTag(tag)}
-                            className="px-3 py-1 text-sm bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full border border-purple-200 hover:border-purple-300 transition-all cursor-pointer group relative"
-                            title="点击复制此标签"
-                          >
-                            #{tag}
-                            {copySuccess === `tag-${tag}` && (
-                              <Check className="w-3 h-3 text-green-600 absolute -top-1 -right-1" />
-                            )}
-                          </button>
-                        ))}
                       </div>
                     </div>
                   )}
