@@ -35,6 +35,7 @@ export interface HistoryItem {
   articleLength: string;
   writingStyle: string;
   articleType: string;
+  language: string; // 添加语言字段
   selectedTitle?: AITitle; // 用户选择的标题
   generatedData: AIGeneratedData;
   provider: AIProvider;

@@ -8,6 +8,7 @@ interface ArticleState {
   articleLength: string;
   writingStyle: string;
   articleType: string;
+  language: string; // 添加语言字段
   keywords: string;
 
   // 生成内容
@@ -25,6 +26,7 @@ interface ArticleState {
   setArticleLength: (value: string) => void;
   setWritingStyle: (value: string) => void;
   setArticleType: (value: string) => void;
+  setLanguage: (value: string) => void; // 添加语言设置方法
   setKeywords: (value: string) => void;
   setGeneratedContent: (value: string) => void;
   setIsGenerating: (value: boolean) => void;
@@ -48,6 +50,7 @@ const defaultState = {
   articleLength: "medium",
   writingStyle: "professional",
   articleType: "blog",
+  language: "chinese", // 默认中文
   keywords: "",
   generatedContent: "",
   isGenerating: false,
@@ -75,6 +78,7 @@ export const useArticleStore = create<ArticleState>()(
       setArticleLength: (value) => set({ articleLength: value }),
       setWritingStyle: (value) => set({ writingStyle: value }),
       setArticleType: (value) => set({ articleType: value }),
+      setLanguage: (value) => set({ language: value }),
       setKeywords: (value) => set({ keywords: value }),
       setGeneratedContent: (value) => set({ generatedContent: value }),
       setIsGenerating: (value) => set({ isGenerating: value }),
@@ -87,6 +91,7 @@ export const useArticleStore = create<ArticleState>()(
           articleLength: defaultState.articleLength,
           writingStyle: defaultState.writingStyle,
           articleType: defaultState.articleType,
+          language: defaultState.language,
         }),
 
       // API 配置

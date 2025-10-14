@@ -3,6 +3,8 @@
  * 由于使用了 output: export，无法使用 API 路由
  */
 
+import { LANGUAGE_NAMES } from "../config/languageConfig";
+
 const PROMPT_TEMPLATE = `# AI 文章生成提示词模板
 
 你是一位专业的内容创作者，需要根据用户提供的关键词和要求生成高质量的文章。
@@ -13,6 +15,7 @@ const PROMPT_TEMPLATE = `# AI 文章生成提示词模板
 - **文章长度**: {{articleLength}}
 - **写作风格**: {{writingStyle}}
 - **文章类型**: {{articleType}}
+- **输出语言**: {{language}} - **请使用此语言撰写所有内容（包括标题、正文和标签）**
 
 ## 输出格式要求
 
@@ -115,6 +118,7 @@ interface PromptOptions {
   articleLength: string;
   writingStyle: string;
   articleType: string;
+  language: string; // 添加语言参数
 }
 
 const lengthMap: Record<string, string> = {
@@ -143,7 +147,8 @@ const typeMap: Record<string, string> = {
  * 生成提示词
  */
 export function generatePrompt(options: PromptOptions): string {
-  const { keywords, articleLength, writingStyle, articleType } = options;
+  const { keywords, articleLength, writingStyle, articleType, language } =
+    options;
 
   let prompt = PROMPT_TEMPLATE;
 
@@ -151,7 +156,8 @@ export function generatePrompt(options: PromptOptions): string {
     .replace("{{keywords}}", keywords)
     .replace("{{articleLength}}", lengthMap[articleLength] || articleLength)
     .replace("{{writingStyle}}", styleMap[writingStyle] || writingStyle)
-    .replace("{{articleType}}", typeMap[articleType] || articleType);
+    .replace("{{articleType}}", typeMap[articleType] || articleType)
+    .replace("{{language}}", LANGUAGE_NAMES[language] || language);
 
   return prompt;
 }
