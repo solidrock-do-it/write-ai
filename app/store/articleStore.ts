@@ -110,7 +110,7 @@ export const useArticleStore = create<ArticleState>()(
       // 历史记录方法
       addHistoryItem: (item) =>
         set((state) => ({
-          historyItems: [item, ...state.historyItems].slice(0, 50), // 最多保留50条
+          historyItems: [item, ...state.historyItems].slice(0, 100), // 最多保留100条
         })),
 
       deleteHistoryItem: (id) =>
