@@ -1,9 +1,14 @@
 import { AIProvider, AIGeneratedData } from "../types";
+import { invoke } from "@tauri-apps/api/core";
+
+// 检测是否在 Tauri 环境中运行
+const isTauriEnv = typeof window !== "undefined" && "__TAURI__" in window;
 
 // 是否使用 Next.js API 代理来避开 CORS 问题
+// Tauri 环境: 使用 Tauri command
 // 开发环境: true (使用 API 代理,支持所有 AI 提供商)
 // 生产环境: false (直接调用,仅支持 Qwen)
-const USE_API_PROXY = process.env.NODE_ENV === "development";
+const USE_API_PROXY = !isTauriEnv && process.env.NODE_ENV === "development";
 
 export interface GenerateOptions {
   provider: AIProvider;
@@ -14,6 +19,71 @@ export interface GenerateOptions {
   onChunk?: (chunk: string) => void;
   onComplete?: (data: AIGeneratedData) => void;
   onError?: (error: Error) => void;
+}
+
+/**
+ * 通过 Tauri command 调用 AI (非流式,一次性返回)
+ */
+async function generateViaTauri(options: GenerateOptions): Promise<void> {
+  const {
+    provider,
+    apiKey,
+    prompt,
+    model,
+    proxyUrl,
+    onChunk,
+    onComplete,
+    onError,
+  } = options;
+
+  try {
+    console.log(`[Tauri] Calling ai_proxy_request for ${provider}`);
+    console.log(`[Tauri] Request payload:`, {
+      provider,
+      hasApiKey: !!apiKey,
+      promptLength: prompt?.length,
+      model,
+      proxyUrl,
+    });
+
+    const response = await invoke<{
+      success: boolean;
+      content?: string;
+      error?: string;
+    }>("ai_proxy_request", {
+      request: {
+        provider,
+        api_key: apiKey,
+        prompt,
+        model,
+        proxy_url: proxyUrl,
+      },
+    });
+
+    console.log(`[Tauri] Response received:`, {
+      success: response.success,
+      hasContent: !!response.content,
+      contentLength: response.content?.length || 0,
+    });
+
+    if (!response.success || !response.content) {
+      throw new Error(response.error || "Tauri AI proxy request failed");
+    }
+
+    // 一次性显示全部内容
+    onChunk?.(response.content);
+
+    // 解析 AI 返回的数据
+    const parsedData = parseAIResponse(response.content);
+    if (parsedData) {
+      onComplete?.(parsedData);
+    } else {
+      throw new Error("Failed to parse response data");
+    }
+  } catch (error) {
+    console.error("[Tauri] Error:", error);
+    onError?.(error as Error);
+  }
 }
 
 /**
@@ -432,6 +502,14 @@ async function generateWithChatGPT(options: GenerateOptions): Promise<void> {
  */
 export async function generateArticle(options: GenerateOptions): Promise<void> {
   const { provider } = options;
+
+  // 优先使用 Tauri 环境
+  if (isTauriEnv) {
+    console.log(
+      `[AI Service] Using Tauri command for ${provider} (Tauri environment detected)`
+    );
+    return generateViaTauri(options);
+  }
 
   // 如果启用了 API 代理模式,统一使用代理路由
   if (USE_API_PROXY) {
