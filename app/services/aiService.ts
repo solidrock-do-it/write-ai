@@ -165,7 +165,8 @@ export function parseAIResponse(text: string): AIGeneratedData | null {
  * 调用通义千问 API
  */
 async function generateWithQwen(options: GenerateOptions): Promise<void> {
-  const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError } = options;
+  const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError, model } =
+    options;
 
   try {
     const baseUrl =
@@ -182,7 +183,7 @@ async function generateWithQwen(options: GenerateOptions): Promise<void> {
         "X-DashScope-SSE": "enable",
       },
       body: JSON.stringify({
-        model: "qwen-plus",
+        model,
         input: {
           messages: [
             {
@@ -259,11 +260,12 @@ async function generateWithQwen(options: GenerateOptions): Promise<void> {
  * 调用 Gemini API
  */
 async function generateWithGemini(options: GenerateOptions): Promise<void> {
-  const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError } = options;
+  const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError, model } =
+    options;
 
   try {
     // 构造基础 URL
-    const baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:streamGenerateContent?key=${apiKey}`;
+    const baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${apiKey}`;
     const apiUrl = proxyUrl ? `${proxyUrl}/${baseUrl}` : baseUrl;
 
     console.log("Gemini API URL:", apiUrl.replace(apiKey, "***"));
@@ -342,7 +344,8 @@ async function generateWithGemini(options: GenerateOptions): Promise<void> {
  * 调用 ChatGPT API
  */
 async function generateWithChatGPT(options: GenerateOptions): Promise<void> {
-  const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError } = options;
+  const { apiKey, prompt, proxyUrl, onChunk, onComplete, onError, model } =
+    options;
 
   try {
     const baseUrl = "https://api.openai.com/v1/chat/completions";
@@ -357,7 +360,7 @@ async function generateWithChatGPT(options: GenerateOptions): Promise<void> {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
+        model,
         messages: [
           {
             role: "user",
