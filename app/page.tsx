@@ -105,6 +105,7 @@ export default function AIArticleGenerator() {
     deleteHistoryItem,
     loadHistoryItem,
     updateHistoryItem,
+    resetArticleOptions,
   } = useArticleStore();
 
   // 自动调整 textarea 高度
@@ -406,6 +407,29 @@ export default function AIArticleGenerator() {
     }
   };
 
+  // 新建处理：重置选项并清空当前生成结果与选中标题
+  const handleNew = () => {
+    // 重置文章选项到默认
+    // resetArticleOptions 在 store 中定义，确保可用
+    if (typeof (useArticleStore as any).getState === "function") {
+      // 通过动作调用
+    }
+
+    // 调用 store 的重置与清空方法
+    // 注意：我们从 hook 中获取这些方法
+    resetArticleOptions();
+    setKeywords("");
+    setGeneratedContent("");
+    setCurrentGeneratedData(null);
+    setSelectedTitle(null);
+    setCurrentHistoryId(null);
+
+    // 将焦点聚焦到关键词输入框
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
+  };
+
   // 复制完整内容（标题 + 标签 + 正文）
   const handleCopyAll = async () => {
     if (!currentGeneratedData) return;
@@ -546,7 +570,7 @@ export default function AIArticleGenerator() {
         {/* 新建 */}
         <div className="border-b border-gray-200 flex-shrink-0">
           <Button
-            onPress={() => setSettingsOpen(true)}
+            onPress={() => handleNew()}
             variant="light"
             size="md"
             isIconOnly={!sidebarOpen}
