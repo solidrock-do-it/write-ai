@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     } else if (provider === "gemini") {
       // 使用非流式 API
       apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${
-        model || "gemini-1.0-pro"
+        model || "gemini-2.5-flash"
       }:generateContent?key=${apiKey}`;
       requestBody = {
         contents: [

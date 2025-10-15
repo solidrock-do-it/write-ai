@@ -518,12 +518,12 @@ export default function AIArticleGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex">
+    <div className="min-h-screen bg-gradient-to-br border-t-1 border-gray-200 from-blue-50 via-purple-50 to-pink-50 flex">
       {/* 左侧边栏 */}
       <div
         className={`${
           sidebarOpen ? "w-56" : "w-14"
-        } bg-white border-r border-gray-200 shadow-lg transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-10`}
+        } bg-white border-r border-t border-gray-200 shadow-lg transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-10`}
       >
         {/* Logo 区域 */}
         <div className="p-2 border-b border-gray-200 flex-shrink-0">
@@ -534,7 +534,9 @@ export default function AIArticleGenerator() {
             {sidebarOpen && (
               <div>
                 <h1 className="text-sm font-bold text-gray-900">WriteAI</h1>
-                <p className="text-xs text-purple-600">智能创作</p>
+                <p className="text-xs text-purple-600">
+                  智能创作，提升写作效率
+                </p>
               </div>
             )}
           </div>

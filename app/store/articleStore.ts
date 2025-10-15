@@ -70,7 +70,7 @@ const defaultState = {
     proxyEnabled: false,
     proxyUrl: "",
     qwenModel: "qwen-plus",
-    geminiModel: "gemini-1.0-pro",
+    geminiModel: "gemini-2.5-flash",
     chatgptModel: "gpt-3.5-turbo",
   },
   historyItems: [],

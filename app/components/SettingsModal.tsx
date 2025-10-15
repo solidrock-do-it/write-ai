@@ -160,7 +160,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                     <Input
                       label="模型名称"
-                      placeholder="gemini-1.0-pro"
+                      placeholder="gemini-2.5-flash"
                       value={localConfig.geminiModel}
                       onChange={(e) =>
                         setLocalConfig({
@@ -168,7 +168,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           geminiModel: e.target.value,
                         })
                       }
-                      description="支持: gemini-1.0-pro, gemini-1.5-pro, gemini-1.5-flash 等"
+                      description="支持: gemini-2.5-flash, gemini-2.5-pro, gemini-2.0-flash, gemini-2.0-pro 等"
                     />
                   </CardBody>
                 </Card>
