@@ -472,37 +472,67 @@ export default function AIArticleGenerator() {
         ? `<p>${tags.map((t) => `#${t}`).join(" ")}</p>`
         : "";
 
-    // 使用 ReactMarkdown 渲染为 HTML string
+    // 首选使用 remark + remark-html 将 markdown 转为 HTML 字符串
     try {
-      const markdownElement = React.createElement(
-        ReactMarkdown as any,
-        { remarkPlugins: [remarkGfm] },
-        content
-      );
-      const rendered = ReactDOMServer.renderToStaticMarkup(markdownElement);
+      // 动态 require，避免构建期依赖问题
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const remark = require("remark");
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const remarkHtml = require("remark-html");
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const remarkGfmPlugin = require("remark-gfm");
 
+      const processed = remark()
+        .use(remarkGfmPlugin)
+        .use(remarkHtml)
+        .processSync(content || "");
+
+      const rendered = String(processed);
       const finalHtml = `${titleHtml}${tagsHtml}${rendered}`;
 
-      // 尝试写入剪贴板作为 HTML
-      // 使用 clipboard.write with 'text/html' if available
       const write = (navigator.clipboard as any)?.write;
       if (write && window.ClipboardItem) {
         const blob = new Blob([finalHtml], { type: "text/html" });
         const data = [new ClipboardItem({ "text/html": blob })];
         await navigator.clipboard.write(data as any);
       } else {
-        // Fallback: copy plain text HTML string
         await copyToClipboard(finalHtml);
       }
 
       setCopySuccess("all-html");
       setTimeout(() => setCopySuccess(null), 2000);
     } catch (err) {
-      console.error("copy html error", err);
-      // fallback to plain text
-      const fallback = formatPlainFullContent(title, tags, content);
-      await copyToClipboard(fallback);
-      alert("复制 HTML 失败，已回退为纯文本复制。");
+      console.warn(
+        "remark html conversion failed, falling back to React render",
+        err
+      );
+      // fallback: try ReactMarkdown -> renderToStaticMarkup
+      try {
+        const markdownElement = React.createElement(
+          ReactMarkdown as any,
+          { remarkPlugins: [remarkGfm] },
+          content
+        );
+        const rendered = ReactDOMServer.renderToStaticMarkup(markdownElement);
+        const finalHtml = `${titleHtml}${tagsHtml}${rendered}`;
+
+        const write = (navigator.clipboard as any)?.write;
+        if (write && window.ClipboardItem) {
+          const blob = new Blob([finalHtml], { type: "text/html" });
+          const data = [new ClipboardItem({ "text/html": blob })];
+          await navigator.clipboard.write(data as any);
+        } else {
+          await copyToClipboard(finalHtml);
+        }
+
+        setCopySuccess("all-html");
+        setTimeout(() => setCopySuccess(null), 2000);
+      } catch (err2) {
+        console.error("copy html error", err2);
+        const fallback = formatPlainFullContent(title, tags, content);
+        await copyToClipboard(fallback);
+        alert("复制 HTML 失败，已回退为纯文本复制。");
+      }
     }
   };
 
