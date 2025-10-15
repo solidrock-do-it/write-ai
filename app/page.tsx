@@ -23,6 +23,7 @@ import {
   Megaphone,
   X,
   Check,
+  Plus,
 } from "lucide-react";
 import {
   Button,
@@ -522,7 +523,7 @@ export default function AIArticleGenerator() {
       {/* 左侧边栏 */}
       <div
         className={`${
-          sidebarOpen ? "w-56" : "w-14"
+          sidebarOpen ? "w-56" : "w-15"
         } bg-white border-r border-t border-gray-200 shadow-lg transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-10`}
       >
         {/* Logo 区域 */}
@@ -542,8 +543,24 @@ export default function AIArticleGenerator() {
           </div>
         </div>
 
+        {/* 新建 */}
+        <div className="border-b border-gray-200 flex-shrink-0">
+          <Button
+            onPress={() => setSettingsOpen(true)}
+            variant="light"
+            size="md"
+            isIconOnly={!sidebarOpen}
+            className="text-default/75 w-full"
+            radius="none"
+            color="secondary"
+          >
+            <Plus size="16" />
+            {sidebarOpen && <span>新建</span>}
+          </Button>
+        </div>
+
         {/* 历史记录 */}
-        <div className="flex-1 overflow-y-auto py-2 min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0">
           <div>
             {sidebarOpen && historyItems.length === 0 ? (
               <div className="text-xs text-gray-400 text-center py-4">
@@ -612,10 +629,12 @@ export default function AIArticleGenerator() {
                     ) : (
                       <div
                         onClick={() => handleLoadHistoryItem(item.id)}
-                        className="p-1 hover:bg-gray-100 text-xs cursor-pointer flex justify-center"
+                        className="p-1 h-12 hover:bg-gray-100 text-xs cursor-pointer flex justify-center items-center"
                       >
                         <span className="line-clamp-2">
-                          {item.generatedData.tags.slice(0, 1)[0]}
+                          {item.generatedData.tags
+                            .slice(0, 2)
+                            .map((tag) => `${tag}`)}
                         </span>
                       </div>
                     )}
@@ -627,35 +646,39 @@ export default function AIArticleGenerator() {
         </div>
 
         {/* 设置按钮 */}
-        <div className="p-1 border-t border-gray-200 flex-shrink-0">
+        <div className="border-t border-gray-200 flex-shrink-0">
           <Button
             onPress={() => setSettingsOpen(true)}
             variant="light"
             size="md"
             isIconOnly={!sidebarOpen}
             className="text-default/75 w-full"
+            radius="none"
+            color="secondary"
           >
-            <Settings size="22" />
+            <Settings size="16" />
             {sidebarOpen && <span>设置</span>}
           </Button>
         </div>
 
         {/* 收起/展开按钮 */}
-        <div className="p-1 border-t border-gray-200 flex-shrink-0">
+        <div className="border-t border-gray-200 flex-shrink-0">
           <Button
             onPress={() => setSidebarOpen(!sidebarOpen)}
             variant="light"
             size="md"
             isIconOnly={!sidebarOpen}
+            radius="none"
+            color="secondary"
             className="text-default/75 w-full"
           >
             {sidebarOpen ? (
               <>
-                <ChevronLeft size="22" />
+                <ChevronLeft size="16" />
                 <span>收起</span>
               </>
             ) : (
-              <ChevronRight size="22" />
+              <ChevronRight size="16" />
             )}
           </Button>
         </div>

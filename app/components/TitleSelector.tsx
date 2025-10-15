@@ -32,15 +32,15 @@ export default function TitleSelector({
   };
 
   return (
-    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-2 mb-2 border border-purple-200">
+    <div className="bg-gradient-to-r from-secondary/5 to-danger/5 rounded-xl p-2 mb-2 border border-secondary/20">
       <div className="flex items-center gap-2">
-        <Star className="w-5 h-5 text-purple-600" />
+        <Star className="w-5 h-5 text-secondary/60" />
         <h3 className="text-sm font-semibold text-gray-900 flex-1">
           选择一个标题（AI 已生成 5 个选项）
         </h3>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-1.5 hover:bg-purple-200 rounded-lg transition-colors text-purple-600"
+          className="p-1.5 hover:bg-purple/20 rounded-lg transition-colors text-secondary/60"
           title={isExpanded ? "收起标题列表" : "展开标题列表"}
         >
           {isExpanded ? (
@@ -69,9 +69,9 @@ export default function TitleSelector({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => handleCopyTitle(e, title.title)}
-                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-purple-200 ${
+                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-secondary/20 ${
                       selectedTitle?.title === title.title
-                        ? "hover:bg-purple-700"
+                        ? "hover:bg-secondary/70"
                         : ""
                     }`}
                     title="复制此标题"
