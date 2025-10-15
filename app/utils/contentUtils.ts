@@ -2,6 +2,18 @@ import { Document, Paragraph, TextRun, HeadingLevel } from "docx";
 import { saveAs } from "file-saver";
 import { remark } from "remark";
 import strip from "strip-markdown";
+import { getTauriDialog, getTauriFs } from "./tauriImports";
+
+/**
+ * 清理文件名,移除非法字符
+ * Windows 不允许的字符: < > : " / \ | ? *
+ */
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[<>:"\/\\|?*]/g, "") // 移除非法字符
+    .replace(/\s+/g, "_") // 将空格替换为下划线
+    .trim();
+}
 
 /**
  * 复制文本到剪贴板
@@ -78,7 +90,24 @@ export async function downloadAsDocx(
   content: string,
   filename?: string
 ): Promise<void> {
+  console.log("[Download] === Function called ===");
+  console.log("[Download] Parameters:", {
+    title,
+    tagsCount: tags.length,
+    contentLength: content.length,
+    filename,
+  });
+
   try {
+    // 检测是否在 Tauri 环境
+    const isTauriEnv = typeof window !== "undefined" && "__TAURI__" in window;
+    console.log("[Download] Is Tauri environment:", isTauriEnv);
+    console.log(
+      "[Download] window.__TAURI__ exists:",
+      typeof window !== "undefined" && (window as any).__TAURI__
+    );
+    console.log("[Download] window object:", typeof window);
+
     // 创建文档段落
     const paragraphs: Paragraph[] = [];
 
@@ -149,10 +178,75 @@ export async function downloadAsDocx(
       ],
     });
 
-    // 生成并下载
+    // 生成 Blob
     const blob = await require("docx").Packer.toBlob(doc);
-    const finalFilename = filename || `${title || "文章"}_${Date.now()}.docx`;
-    saveAs(blob, finalFilename);
+
+    // 清理文件名,移除非法字符
+    const cleanTitle = sanitizeFilename(title || "文章");
+    const finalFilename = filename
+      ? sanitizeFilename(filename)
+      : `${cleanTitle}_${Date.now()}.docx`;
+
+    // Tauri 环境下使用 Tauri API
+    if (isTauriEnv) {
+      console.log("[Tauri Download] Starting Tauri download process");
+
+      try {
+        // 动态加载 Tauri 插件
+        const dialogPlugin = await getTauriDialog();
+        const fsPlugin = await getTauriFs();
+
+        if (!dialogPlugin || !fsPlugin) {
+          throw new Error("Failed to load Tauri plugins");
+        }
+
+        const { save } = dialogPlugin;
+        const { writeFile } = fsPlugin;
+
+        console.log(
+          "[Tauri Download] Opening save dialog with filename:",
+          finalFilename
+        );
+
+        // 打开保存对话框
+        const savePath = await save({
+          defaultPath: finalFilename,
+          filters: [
+            {
+              name: "Word 文档",
+              extensions: ["docx"],
+            },
+          ],
+        });
+
+        console.log("[Tauri Download] User selected path:", savePath);
+
+        if (savePath) {
+          // 将 Blob 转换为 ArrayBuffer
+          const arrayBuffer = await blob.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+
+          console.log(
+            "[Tauri Download] Writing file, size:",
+            uint8Array.length,
+            "bytes"
+          );
+
+          // 使用 Tauri 写入文件
+          await writeFile(savePath, uint8Array);
+
+          console.log("[Tauri Download] File written successfully");
+        } else {
+          console.log("[Tauri Download] User cancelled save dialog");
+        }
+      } catch (err) {
+        console.error("[Tauri Download] Error:", err);
+        throw err;
+      }
+    } else {
+      // 浏览器环境使用 file-saver
+      saveAs(blob, finalFilename);
+    }
   } catch (error) {
     console.error("Failed to download as docx:", error);
     throw error;

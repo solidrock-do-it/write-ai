@@ -1,12 +1,54 @@
 // 语言配置数据结构
 
-export interface Language {
-  key: string; // 英文标识
-  label: string; // 中文显示名
+// Language key type
+export type Language =
+  | "arabic"
+  | "bengali"
+  | "bulgarian"
+  | "chinese"
+  | "croatian"
+  | "czech"
+  | "danish"
+  | "dutch"
+  | "english"
+  | "estonian"
+  | "finnish"
+  | "french"
+  | "german"
+  | "greek"
+  | "hebrew"
+  | "hindi"
+  | "hungarian"
+  | "indonesian"
+  | "italian"
+  | "japanese"
+  | "korean"
+  | "latvian"
+  | "malay"
+  | "maltese"
+  | "norwegian"
+  | "persian"
+  | "polish"
+  | "portuguese"
+  | "romanian"
+  | "russian"
+  | "serbian"
+  | "slovak"
+  | "slovenian"
+  | "spanish"
+  | "swedish"
+  | "thai"
+  | "turkish"
+  | "ukrainian"
+  | "vietnamese";
+
+export interface LanguageOption {
+  key: Language;
+  label: string;
 }
 
 // 所有支持的语言列表
-export const ALL_LANGUAGES: Language[] = [
+export const ALL_LANGUAGES: LanguageOption[] = [
   { key: "arabic", label: "阿拉伯语" },
   { key: "bengali", label: "孟加拉语" },
   { key: "bulgarian", label: "保加利亚语" },
@@ -426,7 +468,7 @@ export const MODEL_LANGUAGE_SUPPORT: Record<string, string[]> = {
 };
 
 // 获取指定模型支持的语言列表
-export function getSupportedLanguages(modelName: string): Language[] {
+export function getSupportedLanguages(modelName: string): LanguageOption[] {
   const supportedKeys =
     MODEL_LANGUAGE_SUPPORT[modelName] || MODEL_LANGUAGE_SUPPORT["qwen-plus"];
   return ALL_LANGUAGES.filter((lang) => supportedKeys.includes(lang.key));
@@ -435,7 +477,7 @@ export function getSupportedLanguages(modelName: string): Language[] {
 // 检查模型是否支持指定语言
 export function isLanguageSupported(
   modelName: string,
-  languageKey: string
+  languageKey: Language
 ): boolean {
   const supportedKeys = MODEL_LANGUAGE_SUPPORT[modelName] || [];
   return supportedKeys.includes(languageKey);

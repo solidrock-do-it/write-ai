@@ -7,6 +7,7 @@ import {
   HistoryItem,
   APIConfig,
 } from "../types";
+import { Language } from "../config/languageConfig";
 
 // 定义文章配置状态类型
 interface ArticleState {
@@ -14,7 +15,7 @@ interface ArticleState {
   articleLength: string;
   writingStyle: string;
   articleType: string;
-  language: string; // 添加语言字段
+  language: Language; // 添加语言字段
   keywords: string;
 
   // 生成内容
@@ -32,7 +33,7 @@ interface ArticleState {
   setArticleLength: (value: string) => void;
   setWritingStyle: (value: string) => void;
   setArticleType: (value: string) => void;
-  setLanguage: (value: string) => void; // 添加语言设置方法
+  setLanguage: (value: Language) => void; // 添加语言设置方法
   setKeywords: (value: string) => void;
   setGeneratedContent: (value: string) => void;
   setIsGenerating: (value: boolean) => void;
@@ -57,7 +58,7 @@ const defaultState = {
   articleLength: "medium",
   writingStyle: "professional",
   articleType: "seo",
-  language: "chinese", // 默认中文
+  language: "chinese" as Language, // 默认中文
   keywords: "",
   generatedContent: "",
   isGenerating: false,
@@ -133,7 +134,7 @@ export const useArticleStore = create<ArticleState>()(
             articleLength: item.articleLength,
             writingStyle: item.writingStyle,
             articleType: item.articleType,
-            language: item.language || "chinese", // 加载语言信息，默认中文
+            language: (item.language as Language) || ("chinese" as Language), // 加载语言信息，默认中文
             currentGeneratedData: item.generatedData,
             generatedContent: item.generatedData.content,
           });
