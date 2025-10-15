@@ -43,6 +43,84 @@ export function formatFullContent(
 }
 
 /**
+ * 格式化为纯文本（去除 markdown 标记）
+ */
+export function formatPlainFullContent(
+  title: string,
+  tags: string[],
+  content: string
+): string {
+  // 尝试使用 remark + strip-markdown 生成更稳健的纯文本
+  try {
+    // 动态 require 以避免在依赖未安装时抛错（回退到 regex 方法）
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const remark = require("remark");
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const strip = require("strip-markdown");
+
+    const processor = remark().use(strip);
+    const processed = processor.processSync(content || "");
+    const plainBody = String(processed).replace(/\r\n/g, "\n").trim();
+
+    const titlePart = title ? `${title}\n\n` : "";
+    const tagsPart =
+      tags && tags.length > 0
+        ? `${tags.map((tag) => `#${tag}`).join(" ")}\n\n`
+        : "";
+
+    return `${titlePart}${tagsPart}${plainBody}`.trim();
+  } catch (e) {
+    // 回退到之前的简单正则实现
+    const stripHtml = (s: string) =>
+      s.replace(/<br\s*\/?\>/gi, "\n").replace(/<[^>]+>/g, "");
+
+    // 基本去除常见 Markdown 标记的简易处理
+    const stripMarkdown = (s: string) => {
+      if (!s) return s;
+      let t = s;
+      t = stripHtml(t);
+      // headings
+      t = t.replace(/^#{1,6}\s*/gm, "");
+      // bold/italic/strikethrough/code
+      t = t.replace(/\*\*(.*?)\*\*/g, "$1");
+      t = t.replace(/\*(.*?)\*/g, "$1");
+      t = t.replace(/~~(.*?)~~/g, "$1");
+      t = t.replace(/`([^`]*)`/g, "$1");
+      // links/images
+      t = t.replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1");
+      t = t.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
+      // list markers
+      t = t.replace(/^[\s>*-]*([-*+]|\d+\.)\s+/gm, "");
+      // horizontal rules
+      t = t.replace(/^([-*_]\s*\n){2,}/gm, "\n");
+      // blockquotes
+      t = t.replace(/^>\s?/gm, "");
+      // remove any leftover backticks or asterisks
+      t = t.replace(/[*_]{1,3}/g, "");
+      // collapse multiple blank lines
+      t = t.replace(/\n{3,}/g, "\n\n");
+      return t.trim();
+    };
+
+    let result = "";
+
+    if (title) {
+      result += `${title}\n\n`;
+    }
+
+    if (tags && tags.length > 0) {
+      result += `${tags.map((tag) => `#${tag}`).join(" ")}\n\n`;
+    }
+
+    if (content) {
+      result += stripMarkdown(content);
+    }
+
+    return result;
+  }
+}
+
+/**
  * 下载为 Word 文档
  */
 export async function downloadAsDocx(

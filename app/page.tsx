@@ -45,11 +45,13 @@ import { generatePrompt } from "./utils/promptGenerator";
 import {
   copyToClipboard,
   formatFullContent,
+  formatPlainFullContent,
   downloadAsDocx,
   copyAllTags,
   copyTitle,
   copyContent,
 } from "./utils/contentUtils";
+import ReactDOMServer from "react-dom/server";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -439,16 +441,68 @@ export default function AIArticleGenerator() {
     const title =
       selectedTitle?.title || currentGeneratedData.titles[0]?.title || "";
     const tags = currentGeneratedData.tags || [];
-    const content = generatedContent;
 
-    const fullText = formatFullContent(title, tags, content);
-    const success = await copyToClipboard(fullText);
+    // 纯文本副本：移除 Markdown/HTML 标记
+    const content = generatedContent;
+    const plain = formatPlainFullContent(title, tags, content);
+    const success = await copyToClipboard(plain);
 
     if (success) {
       setCopySuccess("all");
       setTimeout(() => setCopySuccess(null), 2000);
     } else {
       alert("复制失败，请重试");
+    }
+  };
+
+  // 复制 HTML（标题 h1 + 标签带# + 正文 HTML）
+  const handleCopyAllHTML = async () => {
+    if (!currentGeneratedData) return;
+
+    const title =
+      selectedTitle?.title || currentGeneratedData.titles[0]?.title || "";
+    const tags = currentGeneratedData.tags || [];
+    const content = generatedContent || "";
+
+    // 标题 h1
+    const titleHtml = title ? `<h1>${title}</h1>` : "";
+    // 标签行
+    const tagsHtml =
+      tags && tags.length > 0
+        ? `<p>${tags.map((t) => `#${t}`).join(" ")}</p>`
+        : "";
+
+    // 使用 ReactMarkdown 渲染为 HTML string
+    try {
+      const markdownElement = React.createElement(
+        ReactMarkdown as any,
+        { remarkPlugins: [remarkGfm] },
+        content
+      );
+      const rendered = ReactDOMServer.renderToStaticMarkup(markdownElement);
+
+      const finalHtml = `${titleHtml}${tagsHtml}${rendered}`;
+
+      // 尝试写入剪贴板作为 HTML
+      // 使用 clipboard.write with 'text/html' if available
+      const write = (navigator.clipboard as any)?.write;
+      if (write && window.ClipboardItem) {
+        const blob = new Blob([finalHtml], { type: "text/html" });
+        const data = [new ClipboardItem({ "text/html": blob })];
+        await navigator.clipboard.write(data as any);
+      } else {
+        // Fallback: copy plain text HTML string
+        await copyToClipboard(finalHtml);
+      }
+
+      setCopySuccess("all-html");
+      setTimeout(() => setCopySuccess(null), 2000);
+    } catch (err) {
+      console.error("copy html error", err);
+      // fallback to plain text
+      const fallback = formatPlainFullContent(title, tags, content);
+      await copyToClipboard(fallback);
+      alert("复制 HTML 失败，已回退为纯文本复制。");
     }
   };
 
@@ -889,10 +943,12 @@ export default function AIArticleGenerator() {
               <h2 className="text-sm font-semibold text-gray-700">生成结果</h2>
               {generatedContent && (
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleCopyAll}
-                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
+                  <Button
+                    onPress={handleCopyAll}
                     title="复制全部（标题+标签+正文）"
+                    size="sm"
+                    color="secondary"
+                    variant="light"
                   >
                     {copySuccess === "all" ? (
                       <>
@@ -903,21 +959,44 @@ export default function AIArticleGenerator() {
                         <Copy className="w-4 h-4" />
                       </>
                     )}
-                  </button>
-                  <button
-                    onClick={handleDownload}
-                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
+                    复制纯文本
+                  </Button>
+                  <Button
+                    onPress={handleCopyAllHTML}
+                    title="复制 HTML（含 h1 标题、#标签、正文 HTML）"
+                    size="sm"
+                    color="secondary"
+                    variant="light"
+                  >
+                    {copySuccess === "all-html" ? (
+                      <>
+                        <Check className="w-4 h-4 text-green-600" />
+                      </>
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                    复制带格式
+                  </Button>
+                  <Button
+                    onPress={handleDownload}
                     title="下载为 Word 文档"
+                    size="sm"
+                    color="secondary"
+                    variant="light"
+                    isIconOnly
                   >
                     <Download className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="p-2 hover:bg-red-100 rounded-lg transition-colors text-gray-600 hover:text-red-600"
+                  </Button>
+                  <Button
+                    onPress={handleDelete}
                     title="删除当前内容和历史记录"
+                    size="sm"
+                    color="secondary"
+                    variant="light"
+                    isIconOnly
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -933,17 +1012,21 @@ export default function AIArticleGenerator() {
                           {selectedTitle.title}
                         </h1>
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleCopyTitle(selectedTitle.title)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-lg"
+                          <Button
+                            onPress={() => handleCopyTitle(selectedTitle.title)}
                             title="复制此标题"
+                            size="sm"
+                            color="secondary"
+                            variant="light"
+                            isIconOnly
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             {copySuccess === `title-${selectedTitle.title}` ? (
                               <Check className="w-4 h-4 text-green-600" />
                             ) : (
                               <Copy className="w-4 h-4 text-gray-600" />
                             )}
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -963,17 +1046,21 @@ export default function AIArticleGenerator() {
                         ))}
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleCopyAllTags()}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-lg"
+                        <Button
+                          onPress={() => handleCopyAllTags()}
                           title="复制全部标签"
+                          size="sm"
+                          color="secondary"
+                          variant="light"
+                          isIconOnly
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           {copySuccess === `tags` ? (
                             <Check className="w-4 h-4 text-green-600" />
                           ) : (
                             <Copy className="w-4 h-4 text-gray-600" />
                           )}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -981,17 +1068,21 @@ export default function AIArticleGenerator() {
                   {/* 正文显示（可复制） */}
                   <div className="group relative">
                     <div className="absolute top-0 right-0">
-                      <button
-                        onClick={handleCopyContent}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-lg"
+                      <Button
+                        onPress={handleCopyContent}
                         title="复制正文"
+                        size="sm"
+                        color="secondary"
+                        variant="light"
+                        isIconOnly
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         {copySuccess === "content" ? (
                           <Check className="w-4 h-4 text-green-600" />
                         ) : (
                           <Copy className="w-4 h-4 text-gray-600" />
                         )}
-                      </button>
+                      </Button>
                     </div>
                     <div className="prose prose-gray max-w-none focus:outline-none text-gray-800 leading-relaxed">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
