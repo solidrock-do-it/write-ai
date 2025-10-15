@@ -220,7 +220,7 @@ TypeError: fetch failed
      generatePrompt({
        keywords: "测试",
        articleLength: "medium",
-       writingStyle: "article",
+       writingStyle: "professional",
        articleType: "blog",
      })
    );

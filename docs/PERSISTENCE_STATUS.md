@@ -14,8 +14,8 @@
 | 配置项          | 默认值           | 说明                                                   |
 | --------------- | ---------------- | ------------------------------------------------------ |
 | `articleLength` | `"medium"`       | 文章长度 (short/medium/long)                           |
-| `writingStyle`  | `"professional"` | 写作风格 (professional/blog/report/creative/marketing) |
-| `articleType`   | `"blog"`         | 文章类型 (blog/news/product/seo/tutorial)              |
+| `writingStyle`  | `"professional"` | 写作风格 (professional/casual/report/creative/marketing) |
+| `articleType`   | `"seo"`         | 文章类型 (blog/news/product/seo/tutorial)              |
 
 **测试**: 修改选项 → 刷新页面 → 配置恢复 ✓
 

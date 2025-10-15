@@ -204,13 +204,13 @@ export default function AIArticleGenerator() {
       stateKey: "writingStyle",
       options: [
         {
-          key: "article",
+          key: "professional",
           label: "正式专业",
           description: "正式专业的文章",
           icon: FileText,
         },
         {
-          key: "blog",
+          key: "casual",
           label: "轻松随意",
           description: "轻松随意的博客文章",
           icon: Feather,
