@@ -1,5 +1,7 @@
 import { Document, Paragraph, TextRun, HeadingLevel } from "docx";
 import { saveAs } from "file-saver";
+import { remark } from "remark";
+import strip from "strip-markdown";
 
 /**
  * 复制文本到剪贴板
@@ -53,10 +55,6 @@ export function formatPlainFullContent(
   // 尝试使用 remark + strip-markdown 生成更稳健的纯文本
   try {
     // 动态 require 以避免在依赖未安装时抛错（回退到 regex 方法）
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const remark = require("remark");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const strip = require("strip-markdown");
 
     const processor = remark().use(strip);
     const processed = processor.processSync(content || "");
@@ -70,6 +68,7 @@ export function formatPlainFullContent(
 
     return `${titlePart}${tagsPart}${plainBody}`.trim();
   } catch (e) {
+    console.warn("Remark processing failed, falling back to regex:", e);
     // 回退到之前的简单正则实现
     const stripHtml = (s: string) =>
       s.replace(/<br\s*\/?\>/gi, "\n").replace(/<[^>]+>/g, "");
