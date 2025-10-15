@@ -7,7 +7,10 @@
     "dev": "next dev --turbopack --port 3101",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@heroui/react": "^2.8.5",
