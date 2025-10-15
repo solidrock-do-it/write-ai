@@ -49,7 +49,7 @@ export function ArticleToolbar({
           ) : (
             <Copy className="w-4 h-4" />
           )}
-          复制带格式
+          复制HTML格式
         </Button>
         <Button
           onPress={onCopyMarkdown}
@@ -63,7 +63,7 @@ export function ArticleToolbar({
           ) : (
             <Copy className="w-4 h-4" />
           )}
-          复制带md
+          复制MD格式
         </Button>
         <Button
           onPress={onDownload}
