@@ -128,7 +128,7 @@ const lengthMap: Record<string, string> = {
 };
 
 const styleMap: Record<string, string> = {
-  article: "正式专业",
+  professional: "正式专业",
   casual: "轻松随意",
   report: "学术严谨",
   creative: "创意文学",

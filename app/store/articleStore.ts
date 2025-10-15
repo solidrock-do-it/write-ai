@@ -55,7 +55,7 @@ interface ArticleState {
 // 默认值
 const defaultState = {
   articleLength: "medium",
-  writingStyle: "article",
+  writingStyle: "professional",
   articleType: "seo",
   language: "chinese", // 默认中文
   keywords: "",
