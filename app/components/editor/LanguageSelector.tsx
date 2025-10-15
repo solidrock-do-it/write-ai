@@ -2,6 +2,7 @@ import React from "react";
 import { Globe, Check } from "lucide-react";
 import { Button, Popover, PopoverContent, PopoverTrigger } from "@heroui/react";
 import { Language, LanguageOption } from "@/app/config/languageConfig";
+import { findLanguage } from "@/app/utils/optionsHelper";
 
 interface LanguageSelectorProps {
   language: Language;
@@ -18,9 +19,7 @@ export function LanguageSelector({
   isOpen,
   onOpenChange,
 }: LanguageSelectorProps) {
-  const currentLanguage = supportedLanguages.find(
-    (lang) => lang.key === language
-  );
+  const currentLanguage = findLanguage(supportedLanguages, language);
 
   return (
     <Popover placement="bottom" isOpen={isOpen} onOpenChange={onOpenChange}>

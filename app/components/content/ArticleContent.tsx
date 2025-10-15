@@ -34,7 +34,7 @@ export function ArticleContent({
           )}
         </Button>
       </div>
-      <div className="prose prose-gray max-w-none focus:outline-none text-gray-800 leading-relaxed">
+      <div className="prose prose-sm max-w-none focus:outline-none text-gray-800 leading-relaxed">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </div>
     </div>

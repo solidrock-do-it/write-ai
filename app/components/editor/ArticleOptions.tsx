@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@heroui/react";
+import { getOptionLabel, getOptionIcon } from "@/app/utils/optionsHelper";
 
 export type OptionItem = {
   key: string;
@@ -39,18 +40,6 @@ export function ArticleOptions({
   openPopovers,
   setOpenPopovers,
 }: ArticleOptionsProps) {
-  // 根据 key 和 section 获取对应的 label
-  const getOptionLabel = (section: OptionSection, key: string) => {
-    const option = section.options.find((opt) => opt.key === key);
-    return option?.label || key;
-  };
-
-  // 根据 key 和 section 获取对应的 icon
-  const getOptionIcon = (section: OptionSection, key: string) => {
-    const option = section.options.find((opt) => opt.key === key);
-    return option?.icon;
-  };
-
   return (
     <div className="flex gap-2 flex-wrap">
       {sections.map((section) => {

@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { Button, Tooltip } from "@heroui/react";
 import { HistoryItem as HistoryItemType } from "@/app/types";
+import { findLanguage, getOptionLabel } from "@/app/utils/optionsHelper";
+import { articleOptionSections } from "@/app/config/articleOptions";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -84,9 +86,34 @@ export function Sidebar({
                   offset={10}
                   content={
                     <div className="p-2 max-w-xs">
+                      <div className="text-xs text-gray-500 truncate gap-1 flex flex-wrap">
+                        <span>
+                          {new Date(item.timestamp).toLocaleDateString()}
+                        </span>
+                        <span>
+                          {getOptionLabel(
+                            articleOptionSections[0],
+                            item.articleLength
+                          )}
+                        </span>
+                        <span>
+                          {getOptionLabel(
+                            articleOptionSections[1],
+                            item.writingStyle
+                          )}
+                        </span>
+                        <span>
+                          {getOptionLabel(
+                            articleOptionSections[2],
+                            item.articleType
+                          )}
+                        </span>
+                        <span>{item.language || "未知语言"}</span>
+                      </div>
                       <div className="text-xs font-semibold mb-1 text-gray-900">
                         {item.generatedData.titles[0]?.title || item.keywords}
                       </div>
+
                       <div className="text-xs text-gray-600 line-clamp-4 mb-2">
                         {item.generatedData.content
                           .substring(0, 200)
@@ -121,6 +148,14 @@ export function Sidebar({
                           </div>
                           <div className="text-xs text-gray-500 truncate">
                             {new Date(item.timestamp).toLocaleDateString()}
+                            {getOptionLabel(
+                              articleOptionSections[1],
+                              item.writingStyle
+                            )}
+                            {getOptionLabel(
+                              articleOptionSections[2],
+                              item.articleType
+                            )}
                           </div>
                         </div>
                         <button
