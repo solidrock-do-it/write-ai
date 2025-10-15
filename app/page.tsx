@@ -50,6 +50,8 @@ import {
   copyTitle,
   copyContent,
 } from "./utils/contentUtils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   getSupportedLanguages,
   isLanguageSupported,
@@ -881,7 +883,7 @@ export default function AIArticleGenerator() {
             />
           )}
 
-          {/* 富文本编辑区域 */}
+          {/* 文章内容显示区域 */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden flex-1 flex flex-col">
             <div className="border-b border-gray-200 px-4 py-1 flex items-center justify-between bg-gray-50 flex-shrink-0">
               <h2 className="text-sm font-semibold text-gray-700">生成结果</h2>
@@ -991,14 +993,11 @@ export default function AIArticleGenerator() {
                         )}
                       </button>
                     </div>
-                    <div
-                      contentEditable
-                      suppressContentEditableWarning
-                      className="prose prose-gray max-w-none focus:outline-none text-gray-800 leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: generatedContent.replace(/\n/g, "<br/>"),
-                      }}
-                    />
+                    <div className="prose prose-gray max-w-none focus:outline-none text-gray-800 leading-relaxed">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {generatedContent}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -1008,10 +1007,12 @@ export default function AIArticleGenerator() {
                       <Sparkles className="w-10 h-10 text-purple-500" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      开始创作吧
+                      {isGenerating ? "正在生成中..." : "开始创作吧"}
                     </h3>
                     <p className="text-gray-600">
-                      输入关键词，点击"生成文章"按钮，AI将为您创作精彩内容
+                      {isGenerating
+                        ? "请稍候！精彩内容即将呈现"
+                        : '输入关键词，点击"生成文章"按钮，AI将为您创作精彩内容'}
                     </p>
                   </div>
                 </div>
