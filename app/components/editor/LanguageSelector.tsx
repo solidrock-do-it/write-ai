@@ -27,6 +27,7 @@ export function LanguageSelector({
         <Button
           variant="light"
           size="sm"
+          color="secondary"
           className="text-default/75"
           startContent={<Globe className="w-4 h-4" />}
         >

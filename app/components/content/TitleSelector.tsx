@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { AITitle } from "../types";
+import { AITitle } from "../../types";
 import { Star, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
 
 interface TitleSelectorProps {
@@ -34,7 +34,7 @@ export default function TitleSelector({
   return (
     <div className="bg-gradient-to-r from-secondary/5 to-danger/5 rounded-xl p-2 mb-2 border border-secondary/20">
       <div className="flex items-center gap-2">
-        <Star className="w-5 h-5 text-secondary/60" />
+        <Star className="w-4 h-4 text-secondary/60" />
         <h3 className="text-sm font-semibold text-gray-900 flex-1">
           选择一个标题
         </h3>

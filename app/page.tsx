@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useArticleStore } from "./store/articleStore";
-import SettingsModal from "./components/SettingsModal";
-import TitleSelector from "./components/TitleSelector";
+import SettingsModal from "./components/settings/SettingsModal";
+import TitleSelector from "./components/content/TitleSelector";
 import { AITitle } from "./types";
 import { downloadAsDocx } from "./utils/contentUtils";
 import {

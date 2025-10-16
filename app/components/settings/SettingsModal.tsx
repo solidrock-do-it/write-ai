@@ -18,8 +18,8 @@ import {
   Card,
   CardBody,
 } from "@heroui/react";
-import { useArticleStore } from "../store/articleStore";
-import { AIProvider } from "../types";
+import { useArticleStore } from "../../store/articleStore";
+import { AIProvider } from "../../types";
 import { Key, Globe, Settings } from "lucide-react";
 
 interface SettingsModalProps {

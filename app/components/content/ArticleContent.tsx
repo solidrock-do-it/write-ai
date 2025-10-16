@@ -30,7 +30,7 @@ export function ArticleContent({
           {copySuccess === "content" ? (
             <Check className="w-4 h-4 text-green-600" />
           ) : (
-            <Copy className="w-4 h-4 text-gray-600" />
+            <Copy className="w-4 h-4" />
           )}
         </Button>
       </div>

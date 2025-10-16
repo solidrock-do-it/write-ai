@@ -62,6 +62,7 @@ export function ArticleOptions({
               <Button
                 variant="light"
                 size="sm"
+                color="secondary"
                 className="text-default/75"
                 startContent={
                   CurrentIcon && <CurrentIcon className="w-4 h-4" />
@@ -75,6 +76,7 @@ export function ArticleOptions({
                 aria-label={section.title}
                 variant="flat"
                 selectionMode="single"
+                color="secondary"
                 selectedKeys={[currentValue]}
               >
                 <ListboxSection>
