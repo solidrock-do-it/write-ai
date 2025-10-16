@@ -43,17 +43,17 @@ export function LanguageSelector({
             {supportedLanguages.map((lang) => (
               <Button
                 key={String(lang.key)}
-                type="button"
                 onPress={() => {
                   onChange(lang.key);
                   onOpenChange(false);
                 }}
                 variant="light"
                 size="sm"
+                color="secondary"
               >
-                <span>{lang.label}</span>
+                <span className="text-gray-900">{lang.label}</span>
                 {language === lang.key && (
-                  <Check className="w-3 h-3 text-gray-600 flex-shrink-0" />
+                  <Check className="w-3 h-3 text-green-600 flex-shrink-0" />
                 )}
               </Button>
             ))}

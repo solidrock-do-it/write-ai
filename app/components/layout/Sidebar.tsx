@@ -153,7 +153,7 @@ export function Sidebar({
                               item.generatedData.titles[0]?.title ||
                               item.keywords}
                           </div>
-                          <div className="text-xs text-gray-500 truncate flex gap-0.5 flex-wrap">
+                          <div className="text-xs text-gray-500 truncate gap-0.5">
                             <span>{getLanguageLabel(item.language)}</span>
                             <span>
                               {getOptionLabel(
