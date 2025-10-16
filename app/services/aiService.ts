@@ -1,14 +1,15 @@
 import { AIProvider, AIGeneratedData } from "../types";
 import { invoke } from "@tauri-apps/api/core";
 
-// 检测是否在 Tauri 环境中运行
-const isTauriEnv = typeof window !== "undefined" && "__TAURI__" in window;
+// 运行时检测是否在 Tauri 环境中运行（避免在模块加载时在服务器端评估）
+export function isTauriEnv(): boolean {
+  return typeof window !== "undefined" && "__TAURI__" in window;
+}
 
-// 是否使用 Next.js API 代理来避开 CORS 问题
-// Tauri 环境: 使用 Tauri command
-// 开发环境: true (使用 API 代理,支持所有 AI 提供商)
-// 生产环境: false (直接调用,仅支持 Qwen)
-const USE_API_PROXY = !isTauriEnv && process.env.NODE_ENV === "development";
+// 运行时判断是否启用 API 代理模式（仅在非 Tauri 的开发环境下启用）
+function isApiProxyEnabled(): boolean {
+  return !isTauriEnv() && process.env.NODE_ENV === "development";
+}
 
 export interface GenerateOptions {
   provider: AIProvider;
@@ -504,7 +505,7 @@ export async function generateArticle(options: GenerateOptions): Promise<void> {
   const { provider } = options;
 
   // 优先使用 Tauri 环境
-  if (isTauriEnv) {
+  if (isTauriEnv()) {
     console.log(
       `[AI Service] Using Tauri command for ${provider} (Tauri environment detected)`
     );
@@ -512,7 +513,7 @@ export async function generateArticle(options: GenerateOptions): Promise<void> {
   }
 
   // 如果启用了 API 代理模式,统一使用代理路由
-  if (USE_API_PROXY) {
+  if (isApiProxyEnabled()) {
     console.log(
       `[AI Service] Using API proxy mode for ${provider} (NODE_ENV: ${process.env.NODE_ENV})`
     );

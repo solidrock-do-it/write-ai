@@ -149,7 +149,17 @@ export const useArticleStore = create<ArticleState>()(
     }),
     {
       name: "article-storage", // localStorage key
-      storage: createJSONStorage(() => localStorage),
+      // 在 SSR 环境中 localStorage 不可用。createJSONStorage 接受一个工厂函数，
+      // 这里返回一个在服务器上安全的 noop 存储，避免在初始化阶段访问 window/localStorage 导致差异。
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined"
+          ? localStorage
+          : ({
+              getItem: (_key: string) => null,
+              setItem: (_key: string, _value: string) => {},
+              removeItem: (_key: string) => {},
+            } as Storage)
+      ),
       // 只持久化文章选项，不持久化临时状态
       partialize: (state) => ({
         articleLength: state.articleLength,
