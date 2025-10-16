@@ -1,6 +1,7 @@
 import type { OptionSection } from "../components/editor/ArticleOptions";
 import type { ComponentType } from "react";
-import type { LanguageOption } from "../config/languageConfig";
+import type { LanguageOption, Language } from "../config/languageConfig";
+import { ALL_LANGUAGES } from "../config/languageConfig";
 
 /**
  * 通用：根据数组和 key 查找项
@@ -40,4 +41,13 @@ export function findLanguage(
   key: string
 ): LanguageOption | undefined {
   return findByKey<LanguageOption>(languages, key);
+}
+
+/**
+ * 获取语言的友好标签
+ * 从全局语言列表中查找，适用于显示历史记录等场景
+ */
+export function getLanguageLabel(language: Language | string): string {
+  const found = findByKey(ALL_LANGUAGES, language);
+  return found?.label || language;
 }

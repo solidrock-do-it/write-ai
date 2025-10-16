@@ -8,9 +8,9 @@ import {
   X,
   Plus,
 } from "lucide-react";
-import { Button, Tooltip } from "@heroui/react";
+import { Button, ScrollShadow, Tooltip } from "@heroui/react";
 import { HistoryItem as HistoryItemType } from "@/app/types";
-import { findLanguage, getOptionLabel } from "@/app/utils/optionsHelper";
+import { getOptionLabel, getLanguageLabel } from "@/app/utils/optionsHelper";
 import { articleOptionSections } from "@/app/config/articleOptions";
 
 interface SidebarProps {
@@ -19,6 +19,7 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onNew: () => void;
   historyItems: HistoryItemType[];
+  currentHistoryId?: string | null; // 当前选中的历史记录ID
   onHistoryItemClick: (id: string) => void;
   onHistoryItemDelete: (id: string) => void;
 }
@@ -29,6 +30,7 @@ export function Sidebar({
   onOpenSettings,
   onNew,
   historyItems,
+  currentHistoryId,
   onHistoryItemClick,
   onHistoryItemDelete,
 }: SidebarProps) {
@@ -70,7 +72,7 @@ export function Sidebar({
       </div>
 
       {/* 历史记录 */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <ScrollShadow hideScrollBar className="w-auto h-auto flex-1">
         <div>
           {isOpen && historyItems.length === 0 ? (
             <div className="text-xs text-gray-400 text-center py-4">
@@ -86,10 +88,11 @@ export function Sidebar({
                   offset={10}
                   content={
                     <div className="p-2 max-w-xs">
-                      <div className="text-xs text-gray-500 truncate gap-1 flex flex-wrap">
+                      <div className="text-xs text-gray-500 mb-0.5 truncate gap-1 flex flex-wrap">
                         <span>
                           {new Date(item.timestamp).toLocaleDateString()}
                         </span>
+                        <span>{getLanguageLabel(item.language)}</span>
                         <span>
                           {getOptionLabel(
                             articleOptionSections[0],
@@ -108,10 +111,11 @@ export function Sidebar({
                             item.articleType
                           )}
                         </span>
-                        <span>{item.language || "未知语言"}</span>
                       </div>
                       <div className="text-xs font-semibold mb-1 text-gray-900">
-                        {item.generatedData.titles[0]?.title || item.keywords}
+                        {item.selectedTitle?.title ||
+                          item.generatedData.titles[0]?.title ||
+                          item.keywords}
                       </div>
 
                       <div className="text-xs text-gray-600 line-clamp-4 mb-2">
@@ -136,26 +140,39 @@ export function Sidebar({
                 >
                   {isOpen ? (
                     <div
-                      className="group relative px-2 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
+                      className={`group relative px-2 py-2 w-56 hover:bg-secondary/20 cursor-pointer transition-colors ${
+                        currentHistoryId === item.id ? "bg-secondary/40" : ""
+                      }`}
                       onClick={() => onHistoryItemClick(item.id)}
                     >
                       <div className="flex items-center justify-center gap-2 relative">
                         <Clock size={16} />
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-medium text-gray-900 truncate">
-                            {item.generatedData.titles[0]?.title ||
+                            {item.selectedTitle?.title ||
+                              item.generatedData.titles[0]?.title ||
                               item.keywords}
                           </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {new Date(item.timestamp).toLocaleDateString()}
-                            {getOptionLabel(
-                              articleOptionSections[1],
-                              item.writingStyle
-                            )}
-                            {getOptionLabel(
-                              articleOptionSections[2],
-                              item.articleType
-                            )}
+                          <div className="text-xs text-gray-500 truncate flex gap-0.5 flex-wrap">
+                            <span>{getLanguageLabel(item.language)}</span>
+                            <span>
+                              {getOptionLabel(
+                                articleOptionSections[0],
+                                item.articleLength
+                              )}
+                            </span>
+                            <span>
+                              {getOptionLabel(
+                                articleOptionSections[1],
+                                item.writingStyle
+                              )}
+                            </span>
+                            <span>
+                              {getOptionLabel(
+                                articleOptionSections[2],
+                                item.articleType
+                              )}
+                            </span>
                           </div>
                         </div>
                         <button
@@ -172,7 +189,9 @@ export function Sidebar({
                   ) : (
                     <div
                       onClick={() => onHistoryItemClick(item.id)}
-                      className="p-1 h-12 hover:bg-gray-100 text-xs cursor-pointer flex justify-center items-center"
+                      className={`p-1 h-12 hover:bg-gray-100 text-xs cursor-pointer flex justify-center items-center ${
+                        currentHistoryId === item.id ? "bg-secondary/40" : ""
+                      }`}
                     >
                       <span className="line-clamp-2">
                         {item.generatedData.tags
@@ -186,7 +205,7 @@ export function Sidebar({
             </div>
           )}
         </div>
-      </div>
+      </ScrollShadow>
 
       {/* 设置按钮 */}
       <div className="border-t border-gray-200 flex-shrink-0">

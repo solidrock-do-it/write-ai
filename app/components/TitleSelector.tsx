@@ -36,7 +36,7 @@ export default function TitleSelector({
       <div className="flex items-center gap-2">
         <Star className="w-5 h-5 text-secondary/60" />
         <h3 className="text-sm font-semibold text-gray-900 flex-1">
-          选择一个标题（AI 已生成 5 个选项）
+          选择一个标题
         </h3>
         <button
           onClick={() => setIsExpanded(!isExpanded)}

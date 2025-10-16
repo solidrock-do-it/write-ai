@@ -216,6 +216,7 @@ export default function AIArticleGenerator() {
         onOpenSettings={() => setSettingsOpen(true)}
         onNew={handleNew}
         historyItems={historyItems}
+        currentHistoryId={historyManager.currentHistoryId}
         onHistoryItemClick={(id) =>
           historyManager.handleLoadHistory(id, setSelectedTitle)
         }
