@@ -16,9 +16,9 @@ export function ArticleHeader({
   titleKey,
 }: ArticleHeaderProps) {
   return (
-    <div className="mb-2 pb-2 border-b border-gray-200">
+    <div className="mb-2 pb-2 border-b border-default">
       <div className="flex items-start justify-between group">
-        <h1 className="text-2xl font-bold text-gray-900 flex-1">{title}</h1>
+        <h1 className="text-2xl font-bold flex-1">{title}</h1>
         <div className="flex items-center gap-2">
           <Button
             onPress={onCopy}

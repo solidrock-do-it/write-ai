@@ -20,10 +20,10 @@ export function ArticleToolbar({
   copySuccess,
 }: ArticleToolbarProps) {
   return (
-    <div className="border-b border-gray-200 px-2 py-1 flex items-center justify-between bg-gray-50 flex-shrink-0">
+    <div className="border-b border-default/40 bg-gradient-to-r from-default/10 to-default/20 px-2 py-1 flex items-center justify-between flex-shrink-0">
       <div className="flex items-center gap-2">
         <FileText className="w-4 h-4 text-secondary/60" />
-        <h2 className="text-sm font-semibold text-gray-900">生成结果</h2>
+        <h2 className="text-sm font-semibold">生成结果</h2>
       </div>
       <div className="flex items-center gap-2">
         <Button

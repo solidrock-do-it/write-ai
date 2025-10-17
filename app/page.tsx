@@ -208,7 +208,7 @@ export default function AIArticleGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br border-t-1 border-gray-200 from-blue-50 via-purple-50 to-pink-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-secondary/5 border-t-1 border-gray-300 flex">
       {/* 左侧边栏 */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -226,7 +226,7 @@ export default function AIArticleGenerator() {
       {/* 右侧主内容区 */}
       <MainContent sidebarOpen={sidebarOpen}>
         {/* 关键词输入区域 */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg">
+        <div className="rounded-2xl border border-default/70 shadow-lg bg-background">
           <KeywordInput
             value={keywords}
             onChange={keywordInput.handleChange}

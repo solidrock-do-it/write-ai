@@ -14,7 +14,7 @@ export function ArticleTags({
   copySuccess,
 }: ArticleTagsProps) {
   return (
-    <div className="mb-2 pb-2 border-b border-gray-200 flex items-center justify-between group">
+    <div className="mb-2 pb-2 border-b border-default flex items-center justify-between group">
       <div className="flex flex-wrap gap-2">
         {tags.map((tag, index) => (
           <span

@@ -42,7 +42,7 @@ export function Sidebar({
     >
       {/* Logo 区域 */}
       <div className="p-2 border-b border-gray-200 flex-shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full">
           <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
@@ -62,7 +62,7 @@ export function Sidebar({
           variant="light"
           size="md"
           isIconOnly={!isOpen}
-          className="text-default/75 w-full"
+          className="w-full"
           radius="none"
           color="secondary"
         >
@@ -140,15 +140,15 @@ export function Sidebar({
                 >
                   {isOpen ? (
                     <div
-                      className={`group relative px-2 py-2 w-56 hover:bg-secondary/20 cursor-pointer transition-colors ${
-                        currentHistoryId === item.id ? "bg-secondary/40" : ""
+                      className={`group relative px-2 py-2 w-56 hover:bg-secondary/10 cursor-pointer transition-colors ${
+                        currentHistoryId === item.id ? "bg-secondary/20" : ""
                       }`}
                       onClick={() => onHistoryItemClick(item.id)}
                     >
                       <div className="flex items-center justify-center gap-2 relative">
                         <Clock size={16} />
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium text-gray-900 truncate">
+                          <div className="text-xs font-bold text-foreground/80 truncate">
                             {item.selectedTitle?.title ||
                               item.generatedData.titles[0]?.title ||
                               item.keywords}
@@ -214,7 +214,7 @@ export function Sidebar({
           variant="light"
           size="md"
           isIconOnly={!isOpen}
-          className="text-default/75 w-full"
+          className="w-full"
           radius="none"
           color="secondary"
         >
@@ -232,7 +232,7 @@ export function Sidebar({
           isIconOnly={!isOpen}
           radius="none"
           color="secondary"
-          className="text-default/75 w-full"
+          className="w-full"
         >
           {isOpen ? (
             <>

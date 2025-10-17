@@ -32,12 +32,10 @@ export default function TitleSelector({
   };
 
   return (
-    <div className="bg-gradient-to-r from-secondary/5 to-danger/5 rounded-xl p-2 mb-2 border border-secondary/20">
+    <div className="bg-gradient-to-r from-secondary/5 to-danger/5 rounded-xl px-2 py-1 mb-2 border border-secondary/20">
       <div className="flex items-center gap-2">
         <Star className="w-4 h-4 text-secondary/60" />
-        <h3 className="text-sm font-semibold text-gray-900 flex-1">
-          选择一个标题
-        </h3>
+        <h3 className="text-sm font-bold flex-1">选择一个标题</h3>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="p-1.5 hover:bg-purple/20 rounded-lg transition-colors text-secondary/60"
@@ -55,17 +53,15 @@ export default function TitleSelector({
           {titles.map((title, index) => (
             <div
               key={index}
-              className={`w-full text-left py-1 px-2 text-gray-500 rounded-lg transition-all group cursor-pointer ${
+              className={`w-full text-left bg-background/70 py-1 px-2 rounded-lg transition-all group cursor-pointer ${
                 selectedTitle?.title === title.title
-                  ? "bg-secondary/40 text-gray-900 shadow-lg"
-                  : "bg-white hover:bg-secondary/20 hover:text-gray-900"
+                  ? "bg-secondary/20 font-bold"
+                  : "hover:bg-secondary/10"
               }`}
               onClick={() => onSelectTitle(title)}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium flex-1">
-                  {title.title}
-                </span>
+                <span className="text-sm flex-1">{title.title}</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => handleCopyTitle(e, title.title)}

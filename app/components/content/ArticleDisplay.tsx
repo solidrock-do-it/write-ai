@@ -38,7 +38,7 @@ export function ArticleDisplay({
   onCopyContent,
 }: ArticleDisplayProps) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden flex-1 flex flex-col">
+    <div className="rounded-2xl border border-default/70 shadow-lg overflow-hidden flex-1 flex flex-col bg-background">
       {generatedContent && (
         <ArticleToolbar
           onCopyAll={onCopyAll}
