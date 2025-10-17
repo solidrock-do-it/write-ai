@@ -34,7 +34,7 @@ export function LanguageSelector({
         </Button>
       </PopoverTrigger>
       <PopoverContent>
-        <div className="p-2 max-w-md">
+        <div className="p-2 max-w-xl">
           <div className="text-xs font-semibold text-gray-700 mb-2">
             输出语言（当前模型支持 {supportedLanguages.length} 种语言）
           </div>
@@ -50,7 +50,9 @@ export function LanguageSelector({
                 size="sm"
                 color="secondary"
               >
-                <span className="text-gray-900">{lang.label}</span>
+                <span className="text-foreground hover:text-secondary">
+                  {lang.label}
+                </span>
                 {language === lang.key && (
                   <Check className="w-3 h-3 text-green-600 flex-shrink-0" />
                 )}
