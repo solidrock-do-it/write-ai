@@ -208,7 +208,8 @@ export default function AIArticleGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-secondary/5 border-t-1 border-gray-300 flex">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-secondary/5 flex">
+      <div className="border-t-1 border-gray-300 h-[1px] w-full fixed z-20"></div>
       {/* 左侧边栏 */}
       <Sidebar
         isOpen={sidebarOpen}

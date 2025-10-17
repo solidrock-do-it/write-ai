@@ -38,7 +38,7 @@ export function Sidebar({
     <div
       className={`${
         isOpen ? "w-56" : "w-15"
-      } bg-white border-r border-t border-gray-200 shadow-lg transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-10`}
+      } bg-white border-r border-gray-300 shadow-lg transition-all duration-300 flex flex-col h-screen fixed left-0 top-0 z-10`}
     >
       {/* Logo 区域 */}
       <div className="p-2 border-b border-gray-200 flex-shrink-0">
