@@ -1,8 +1,8 @@
 import React from "react";
 import { Globe, Check } from "lucide-react";
 import { Button, Popover, PopoverContent, PopoverTrigger } from "@heroui/react";
-import { Language, LanguageOption } from "@/app/config/languageConfig";
-import { findLanguage } from "@/app/utils/optionsHelper";
+import { Language, LanguageOption } from "@/config/languageConfig";
+import { findLanguage } from "@/utils/optionsHelper";
 
 interface LanguageSelectorProps {
   language: Language;

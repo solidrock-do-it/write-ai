@@ -4,7 +4,7 @@ import { ArticleToolbar } from "./ArticleToolbar";
 import { ArticleHeader } from "./ArticleHeader";
 import { ArticleTags } from "./ArticleTags";
 import { ArticleContent } from "./ArticleContent";
-import { AIGeneratedData, AITitle } from "@/app/types";
+import { AIGeneratedData, AITitle } from "@/types";
 
 interface ArticleDisplayProps {
   generatedContent: string;

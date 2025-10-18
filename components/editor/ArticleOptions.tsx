@@ -8,7 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@heroui/react";
-import { getOptionLabel, getOptionIcon } from "@/app/utils/optionsHelper";
+import { getOptionLabel, getOptionIcon } from "@/utils/optionsHelper";
 
 export type OptionItem = {
   key: string;

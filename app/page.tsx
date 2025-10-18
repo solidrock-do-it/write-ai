@@ -1,38 +1,38 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useArticleStore } from "./store/articleStore";
-import SettingsModal from "./components/settings/SettingsModal";
-import TitleSelector from "./components/content/TitleSelector";
-import { AITitle } from "./types";
-import { downloadAsDocx } from "./utils/contentUtils";
+import { useArticleStore } from "@/store/articleStore";
+import SettingsModal from "@/components/settings/SettingsModal";
+import TitleSelector from "@/components/content/TitleSelector";
+import { AITitle } from "@/types";
+import { downloadAsDocx } from "@/utils/contentUtils";
 import {
   getSupportedLanguages,
   isLanguageSupported,
-} from "./config/languageConfig";
-import { articleOptionSections } from "./config/articleOptions";
+} from "@/config/languageConfig";
+import { articleOptionSections } from "@/config/articleOptions";
 
 // Hooks
-import { useKeywordInput } from "./hooks/useKeywordInput";
-import { useCopyActions } from "./hooks/useCopyActions";
-import { useArticleGenerator } from "./hooks/useArticleGenerator";
-import { useHistoryManager } from "./hooks/useHistoryManager";
+import { useKeywordInput } from "@/hooks/useKeywordInput";
+import { useCopyActions } from "@/hooks/useCopyActions";
+import { useArticleGenerator } from "@/hooks/useArticleGenerator";
+import { useHistoryManager } from "@/hooks/useHistoryManager";
 
 // Layout Components
-import { Sidebar } from "./components/layout/Sidebar";
-import { MainContent } from "./components/layout/MainContent";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { MainContent } from "@/components/layout/MainContent";
 
 // Editor Components
-import { KeywordInput } from "./components/editor/KeywordInput";
+import { KeywordInput } from "@/components/editor/KeywordInput";
 import {
   ArticleOptions,
   OptionSection,
-} from "./components/editor/ArticleOptions";
-import { LanguageSelector } from "./components/editor/LanguageSelector";
-import { GenerateButton } from "./components/editor/GenerateButton";
+} from "@/components/editor/ArticleOptions";
+import { LanguageSelector } from "@/components/editor/LanguageSelector";
+import { GenerateButton } from "@/components/editor/GenerateButton";
 
 // Content Components
-import { ArticleDisplay } from "./components/content/ArticleDisplay";
+import { ArticleDisplay } from "@/components/content/ArticleDisplay";
 
 export default function AIArticleGenerator() {
   // UI State

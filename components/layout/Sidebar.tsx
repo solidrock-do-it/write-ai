@@ -9,9 +9,9 @@ import {
   Plus,
 } from "lucide-react";
 import { Button, ScrollShadow, Tooltip } from "@heroui/react";
-import { HistoryItem as HistoryItemType } from "@/app/types";
-import { getOptionLabel, getLanguageLabel } from "@/app/utils/optionsHelper";
-import { articleOptionSections } from "@/app/config/articleOptions";
+import { HistoryItem as HistoryItemType } from "@/types";
+import { getOptionLabel, getLanguageLabel } from "@/utils/optionsHelper";
+import { articleOptionSections } from "@/config/articleOptions";
 
 interface SidebarProps {
   isOpen: boolean;
